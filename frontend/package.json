@@ -1,6 +1,7 @@
 {
     "name": "trace-viewer-25",
     "private": true,
+    "description": "A simple, fast, and lightweight trace viewer",
     "version": "0.0.1",
     "type": "module",
     "devDependencies": {
