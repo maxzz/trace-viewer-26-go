@@ -1,16 +1,24 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
+import { resolve } from "path/win32";
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
     base: '',
     plugins: [
         react(),
-        tailwindcss()
+        tailwindcss(),
     ],
     server: {
         port: 3000,
-        host: true
-    }
+    },
+    resolve: {
+        alias: {
+            '@': resolve(__dirname, './src'),
+        },
+    },
+    build: {
+        chunkSizeWarningLimit: 1000,
+    },
 });

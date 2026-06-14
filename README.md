@@ -22,3 +22,11 @@ browser and connect to your application.
 ## Building
 
 To build a redistributable, production mode package, use `wails build`.
+
+## Initial setup
+
+This was created from tm-template-go-26 template as:
+* clone the template project (tm-template-go-26) which is template itself
+* remove everything from template cloned project except wails.js folder
+* copy everything from the new vite project (trace-viewer-25) to this project
+* move folder .cursor and .vscode to the repo root if required
