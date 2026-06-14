@@ -1,3 +1,4 @@
+import { resetAppTitle } from "@/store/3-ui-app-title";
 import { filesStore } from "./9-types-files-store";
 import { getCurrentFileState, setCurrentFileState } from "./0-1-files-current-state";
 import { historyActions } from "./0-3-files-history";
@@ -36,6 +37,7 @@ export function closeFile(id: string) {
                 selectFile(filesStore.states[nextIndex]?.id ?? null);
             } else {
                 clearFileLoadSummary();
+                resetAppTitle();
                 selectFile(null);
             }
         }
@@ -57,6 +59,7 @@ export function closeOtherFiles(id: string) {
     } else {
         filesStore.states.splice(0, filesStore.states.length);
         clearFileLoadSummary();
+        resetAppTitle();
     }
     const keys = Object.keys(filesStore.quickFileData);
     keys.forEach(
@@ -83,6 +86,7 @@ export function closeAllFiles() {
 
     filesStore.states.splice(0, filesStore.states.length);
     filesStore.quickFileData = {};
+    resetAppTitle();
     selectFile(null);
 }
 

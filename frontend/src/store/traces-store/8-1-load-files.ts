@@ -77,7 +77,6 @@ export async function asyncLoadAnyFiles(files: File[], droppedFolderName?: strin
                         })
                     )
                 );
-                setAppTitle(result.files, result.zipFileName);
             }
         }
 
