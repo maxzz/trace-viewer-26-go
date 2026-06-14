@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"os"
 	"tm-template-go-26/backend"
 
 	"github.com/wailsapp/wails/v2"
@@ -16,7 +17,7 @@ var icon []byte
 
 func main() {
 	// Create an instance of the app structure
-	app := backend.NewApp()
+	app := backend.NewApp(os.Args[1:])
 
 	// Load options on startup to get initial width/height
 	initialWidth := 1200

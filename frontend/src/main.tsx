@@ -4,10 +4,12 @@ import { App } from "@/components/0-all/0-app";
 import './index.css';
 import { recomputeFilterMatches } from "@/store/4-file-filters";
 import { recomputeHighlightMatches } from "@/store/5-highlight-rules";
+import { initWailsFileOpening } from "@/wails/init-wails-file-opening";
 
 // Initial computation in case of hot reload or persisted state
 recomputeFilterMatches();
 recomputeHighlightMatches();
+initWailsFileOpening();
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

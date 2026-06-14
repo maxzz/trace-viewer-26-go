@@ -6,6 +6,10 @@ export function Greet(arg1) {
   return window['go']['backend']['App']['Greet'](arg1);
 }
 
+export function ReadPaths(arg1) {
+  return window['go']['backend']['App']['ReadPaths'](arg1);
+}
+
 export function SetDevToolsState(arg1) {
   return window['go']['backend']['App']['SetDevToolsState'](arg1);
 }

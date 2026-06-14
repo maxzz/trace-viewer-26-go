@@ -3,16 +3,23 @@ package backend
 import (
 	"context"
 	"fmt"
+	"sync"
+
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
 type App struct {
-	ctx context.Context
+	ctx                context.Context
+	pendingLaunchPaths []string
+	mu                 sync.Mutex
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp(launchPaths []string) *App {
+	return &App{
+		pendingLaunchPaths: ParseLaunchPaths(launchPaths),
+	}
 }
 
 // Startup is called at application startup
@@ -23,6 +30,21 @@ func (a *App) Startup(ctx context.Context) {
 // DomReady is called after front-end resources have been loaded
 func (a *App) DomReady(ctx context.Context) {
 	a.restoreWindowOptions(ctx)
+	a.emitPendingLaunchPaths()
+}
+
+func (a *App) emitPendingLaunchPaths() {
+	a.mu.Lock()
+	paths := a.pendingLaunchPaths
+	a.pendingLaunchPaths = nil
+	ctx := a.ctx
+	a.mu.Unlock()
+
+	if len(paths) == 0 || ctx == nil {
+		return
+	}
+
+	runtime.EventsEmit(ctx, "open-paths", paths)
 }
 
 // BeforeClose is called when the application is about to quit,
