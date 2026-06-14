@@ -27,7 +27,7 @@ func getIniFilePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	appDir := filepath.Join(configDir, "tm-template-go-26")
+	appDir := filepath.Join(configDir, "trace-viewer-26")
 	// Make sure the directory exists
 	if err := os.MkdirAll(appDir, 0755); err != nil {
 		return "", err

@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Wails: Debug tm-template-go-26",
+            "name": "Wails: Debug trace-viewer-26",
             "type": "go",
             "request": "launch",
             "mode": "exec",

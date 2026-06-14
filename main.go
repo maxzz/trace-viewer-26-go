@@ -39,7 +39,7 @@ func main() {
 	}
 
 	err = wails.Run(&options.App{
-		Title:            "wails template",
+		Title:            "Trace Viewer 2026 Edition",
 		Width:            initialWidth,
 		Height:           initialHeight,
 		Assets:           assets,

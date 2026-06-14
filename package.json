@@ -1,5 +1,5 @@
 {
-  "name": "tm-template-go-26-root",
+  "name": "trace-viewer-26-root",
   "version": "1.0.0",
   "description": "Go tool to view diagnostic traces",
   "private": true,

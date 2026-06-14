@@ -1,12 +1,12 @@
 # Wails / Go binaries and build outputs
 /build/bin/
 /build/darwin/*.app
-/tm-template-go-26
-/tm-template-go-26.exe
-/tm-template-go-26-*.exe
-/tm-template-go-26-darwin-*
-/tm-template-go-26-linux-*
-/tm-template-go-26-windows-*
+/tv-26
+/tv-26.exe
+/tv-26-*.exe
+/tv-26-darwin-*
+/tv-26-linux-*
+/tv-26-windows-*
 
 # Go build & test artifacts
 *.test
