@@ -7,6 +7,7 @@ import { AppGlobalsAndDialogs } from "../4-dialogs/0-app-globals";
 import { ZipLoadingOverlay } from "../ui/local-ui/zip-loading-overlay";
 import { listenerToBuildAllTimesEffectAtom } from "@/store/traces-store/3-2-all-times-listener";
 import { filesCountAtom } from "@/store/6-filtered-files";
+import { isLoadingFilesAtom } from "@/store/traces-store/8-1-load-files";
 import { HeaderRow } from "./1-header";
 import { Footer } from "./2-footer";
 import { TraceMainView } from "./6-resizable-panels";
@@ -29,6 +30,8 @@ export function App() {
 
 export function TraceViewerApp() {
     const fileCount = useAtomValue(filesCountAtom);
+    const isLoadingFiles = useAtomValue(isLoadingFilesAtom);
+    const showTraceMainView = fileCount > 0 && !isLoadingFiles;
 
     useAtomValue(listenerToBuildAllTimesEffectAtom);
 
@@ -37,8 +40,8 @@ export function TraceViewerApp() {
             <HeaderRow />
 
             <div className="flex-1 flex flex-col overflow-hidden relative">
-                {!fileCount
-                    ? <NoFilesView />
+                {!showTraceMainView
+                    ? <NoFilesView loading={isLoadingFiles && fileCount > 0} />
                     : <TraceMainView />
                 }
             </div>
@@ -48,13 +51,15 @@ export function TraceViewerApp() {
     );
 }
 
-function NoFilesView() {
+function NoFilesView({ loading }: { loading?: boolean; }) {
     return (
         <div className="absolute inset-0 bg-foreground/5 flex flex-col items-center justify-center pointer-events-none">
-            <IconBinocular className="size-8" />
-            <p className="max-w-76 text-center text-xs text-foreground">
-                Drag and drop the .trc3 file, folder, ZIP archive, or use the file selection dialog to view the traces.
-            </p>
+            {!loading && (<>
+                <IconBinocular className="size-8" />
+                <p className="max-w-76 text-center text-xs text-foreground">
+                    Drag and drop the .trc3 file, folder, ZIP archive, or use the file selection dialog to view the traces.
+                </p>
+            </>)}
         </div>
     );
 }

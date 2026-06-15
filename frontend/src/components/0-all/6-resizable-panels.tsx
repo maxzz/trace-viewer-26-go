@@ -1,32 +1,67 @@
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef } from "react";
+import { useGroupRef } from "react-resizable-panels";
 import { appSettings } from "../../store/1-ui-settings";
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "../ui/shadcn/resizable";
 import { FileList } from "../1-file-list/0-file-list-all";
 import { TraceListForCurrentFile } from "../2-trace-viewer";
 
-export function TraceMainView() {
-    const savedSizes = appSettings.panelSizes;
-    const defaultFilePanelSize = savedSizes?.[0] ?? 20;
-    const defaultTracePanelSize = savedSizes?.[1] ?? 80;
+const DEFAULT_FILE_PANEL_SIZE = 20;
+const DEFAULT_TRACE_PANEL_SIZE = 80;
 
-    const handleLayout = useCallback(
-        (layout: { [key: string]: number }) => {
-            const sizes = [
-                layout["file-list"],
-                layout["trace-view"]
-            ];
-            appSettings.panelSizes = sizes;
-        }, []
-    );
+export function TraceMainView() {
+    const groupRef = useGroupRef();
+    const restoredLayoutRef = useRef(false);
+
+    const defaultLayout = useMemo(
+        () => ({
+            "file-list": appSettings.panelSizes?.[0] ?? DEFAULT_FILE_PANEL_SIZE,
+            "trace-view": appSettings.panelSizes?.[1] ?? DEFAULT_TRACE_PANEL_SIZE,
+        }),
+        []);
+
+    useLayoutEffect(
+        () => {
+            restoredLayoutRef.current = false;
+            const group = groupRef.current;
+            if (!group) {
+                return;
+            }
+
+            group.setLayout(defaultLayout);
+            restoredLayoutRef.current = true;
+        },
+        [defaultLayout, groupRef]);
+
+    const handleLayoutChanged = useCallback(
+        (layout: { [key: string]: number; }) => {
+            if (!restoredLayoutRef.current) {
+                return;
+            }
+
+            const fileListSize = layout["file-list"];
+            const traceViewSize = layout["trace-view"];
+
+            if (!isValidPanelSize(fileListSize) || !isValidPanelSize(traceViewSize)) {
+                return;
+            }
+
+            appSettings.panelSizes = [fileListSize, traceViewSize];
+        },
+        []);
 
     return (
-        <ResizablePanelGroup className="h-full border-t" orientation="horizontal" onLayoutChange={handleLayout}>
+        <ResizablePanelGroup
+            groupRef={groupRef}
+            className="h-full border-t"
+            orientation="horizontal"
+            defaultLayout={defaultLayout}
+            onLayoutChanged={handleLayoutChanged}
+        >
             <ResizablePanel
                 id="file-list"
-                defaultSize={`${defaultFilePanelSize}`}
-                minSize="132px" // width of full timeline list (68px) + min file list width (64px) = 132px
+                defaultSize={`${defaultLayout["file-list"]}`}
+                minSize="132px"
                 maxSize="90%"
-                //className="min-w-[200px]"
             >
                 <FileList />
             </ResizablePanel>
@@ -35,7 +70,7 @@ export function TraceMainView() {
 
             <ResizablePanel
                 id="trace-view"
-                defaultSize={`${defaultTracePanelSize}`}
+                defaultSize={`${defaultLayout["trace-view"]}`}
             >
                 <div className="h-full overflow-hidden flex flex-col">
                     <TraceListForCurrentFile />
@@ -43,4 +78,8 @@ export function TraceMainView() {
             </ResizablePanel>
         </ResizablePanelGroup>
     );
+}
+
+function isValidPanelSize(size: number | undefined): size is number {
+    return typeof size === "number" && Number.isFinite(size) && size > 0;
 }
