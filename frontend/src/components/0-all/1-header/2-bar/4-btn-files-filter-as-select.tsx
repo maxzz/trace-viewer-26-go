@@ -41,10 +41,10 @@ export function FileFilterDropdown() {
     const hasfilters = selectedFilterId || fileFilters.length > 0;
 
     return (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center">
             <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
                 <DropdownMenuTrigger asChild>
-                    <Button className="h-6 px-2 gap-1 rounded select-none" variant="outline" size="sm" title="Current filter">
+                    <Button className="h-6 pl-2! pr-1.5! rounded rounded-r-none select-none" variant="outline" size="sm" title="Current filter">
                         <span className="max-w-[150px] truncate text-xs font-normal">
                             {activeFilter ? activeFilter.name : "All files"}
                         </span>
@@ -82,7 +82,7 @@ export function FileFilterDropdown() {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button className="size-6 rounded" variant="ghost" size="icon" onClick={handleToggleFilter} disabled={!hasfilters} title={selectedFilterId ? "Disable filter (Show all files)" : "Enable filter"}>
+            <Button className="size-6 rounded rounded-l-none border border-l-0" variant="ghost" size="icon" onClick={handleToggleFilter} disabled={!hasfilters} title={selectedFilterId ? "Disable filter (Show all files)" : "Enable filter"}>
                 {selectedFilterId
                     ? <IconFilterOff className="size-3 opacity-70" />
                     : <IconFilterOn className="size-3 opacity-70" />

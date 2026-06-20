@@ -28,7 +28,7 @@ export function ButtonHighlightToggle() {
                 onClick={() => setEditHighlightsOpen(true)}
                 title="Edit highlight rules"
             >
-                <IconL_ChevronDown className="size-3.5 opacity-50" />
+                <IconL_ChevronDown className="size-3 opacity-50" />
             </Button>
         </div>
     );
