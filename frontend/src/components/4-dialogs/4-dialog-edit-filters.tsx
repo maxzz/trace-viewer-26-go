@@ -274,7 +274,7 @@ function CopyableCode({ text }: { text: string }) {
             <AnimatePresence initial={false}>
                 {copied && (
                     <motion.span
-                        className="absolute top-0 left-0 z-10 flex origin-top-left items-center gap-1 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-green-600 outline shadow-sm"
+                        className="absolute top-1/2 left-0 px-1.5 py-px -translate-y-1/2 text-green-600 bg-muted rounded shadow-sm flex items-center gap-1 z-10 whitespace-nowrap outline"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
