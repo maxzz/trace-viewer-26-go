@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { type ComponentProps, useCallback, useEffect, useState } from "react";
 import { useAtom } from "jotai";
 import { useSnapshot } from "valtio";
+import { classNames } from "@/utils";
+import { turnOffAutoComplete } from "@/utils/disable-hidden-children";
 import { Reorder, useDragControls } from "motion/react";
 import { Button } from "../ui/shadcn/button";
 import { Input } from "../ui/shadcn/input";
@@ -9,17 +11,12 @@ import { GripVertical, Trash2, Plus, Regex } from "lucide-react";
 import { appSettings, type FileFilter } from "../../store/1-ui-settings";
 import { dialogEditFiltersOpenAtom } from "../../store/2-ui-atoms";
 import { filterActions } from "../../store/4-file-filters";
-import { turnOffAutoComplete } from "@/utils/disable-hidden-children";
 import { notice } from "../ui/local-ui/7-toaster/7-toaster";
 
 export function DialogEditFilters() {
     const [open, setOpen] = useAtom(dialogEditFiltersOpenAtom);
     const { fileFilters } = useSnapshot(appSettings, { sync: true });
     const [invalidFilterIds, setInvalidFilterIds] = useState<{ name: Set<string>, pattern: Set<string>; }>({ name: new Set(), pattern: new Set() });
-
-    function handleReorder(newOrder: FileFilter[]) {
-        filterActions.reorderFilters(newOrder);
-    }
 
     function validateFilters(): boolean {
         const invalidNames = new Set<string>();
@@ -46,7 +43,11 @@ export function DialogEditFilters() {
         return true;
     }
 
-    function handleOpenChange(newOpen: boolean) {
+    function onItemsReorder(newOrder: FileFilter[]) {
+        filterActions.reorderFilters(newOrder);
+    }
+
+    function onDlgOpenChange(newOpen: boolean) {
         if (newOpen) {
             // Opening dialog - clear any previous invalid states
             setInvalidFilterIds({ name: new Set(), pattern: new Set() });
@@ -60,14 +61,14 @@ export function DialogEditFilters() {
         }
     }
 
-    function handleClose() {
+    function onDlgClose() {
         if (validateFilters()) {
             setOpen(false);
         }
     }
 
     return (
-        <Dialog open={open} onOpenChange={handleOpenChange}>
+        <Dialog open={open} onOpenChange={onDlgOpenChange}>
             <DialogContent className="max-w-150!" aria-describedby={undefined} onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="select-none">
@@ -80,7 +81,7 @@ export function DialogEditFilters() {
                     {fileFilters.length !== 0 && <Header />}
 
                     <div className="-mr-2 pr-2 py-1 max-h-[60vh] overflow-y-auto">
-                        <Reorder.Group className="m-0 p-0" axis="y" values={fileFilters as unknown as FileFilter[]} onReorder={handleReorder}>
+                        <Reorder.Group className="m-0 p-0" axis="y" values={fileFilters as unknown as FileFilter[]} onReorder={onItemsReorder}>
                             {fileFilters.map(
                                 (filter) => (
                                     <FilterRow
@@ -100,36 +101,16 @@ export function DialogEditFilters() {
                         </Button>
                     </div>
 
-                    <div className="mx-5 mt-1 mb-1 text-xs text-muted-foreground text-balance">
-                        <p className="mb-1">
-                            Patterns support wildcards or regex. For example:
-                        </p>
-                        <ul className="list-disc list-inside space-y-1">
-                            <li>
-                                <span className={codeClasses}>^(?!.*DpHost).*$</span> regex to exclude files with name <span className={codeClasses}>DpHost</span>
-                            </li>
-                            <li>
-                                <span className={codeClasses}>DpHost</span> regex to include files with name <span className={codeClasses}>DpHost</span>
-                            </li>
-                            <li>
-                                <span className={codeClasses}>DpHost</span> wildcard to include files with name <span className={codeClasses}>DpHost</span>
-                            </li>
-                            <li>
-                                <span className={codeClasses}>*DpHost*</span> wildcard to include files with name <span className={codeClasses}>DpHost</span>
-                            </li>
-                        </ul>
-                    </div>
+                    <FilterExamples />
                 </div>
 
                 <DialogFooter className="justify-center!">
-                    <Button variant="outline" onClick={handleClose}>Close</Button>
+                    <Button variant="outline" onClick={onDlgClose}>Close</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog >
     );
 }
-
-const codeClasses = "px-1 bg-muted outline rounded";
 
 function Header() {
     return (
@@ -241,3 +222,31 @@ function InputPattern({ filterId, pattern, isPatternInvalid }: { filterId: strin
         </div>
     );
 }
+
+// Examples of filters
+
+function FilterExamples({ className, ...rest }: ComponentProps<"div">) {
+    return (
+        <div className={classNames("mx-5 mt-1 mb-1 text-xs text-muted-foreground text-balance", className)} {...rest}>
+            <p className="mb-1.5">
+                Examples (wildcards or regex):
+            </p>
+            <ul className="list-disc list-inside space-y-1.5">
+                <li>
+                    <span className={codeClasses}>^(?!.*DpHost).*$</span> regex to exclude files with name <span className={codeClasses}>DpHost</span>
+                </li>
+                <li>
+                    <span className={codeClasses}>DpHost</span> regex to include files with name <span className={codeClasses}>DpHost</span>
+                </li>
+                <li>
+                    <span className={codeClasses}>DpHost</span> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                </li>
+                <li>
+                    <span className={codeClasses}>*DpHost*</span> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                </li>
+            </ul>
+        </div>
+    );
+}
+
+const codeClasses = "px-1 bg-muted outline rounded";
