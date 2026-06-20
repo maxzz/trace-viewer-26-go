@@ -5,7 +5,7 @@ import { appSettings } from "@/store/1-ui-settings";
 import { Button } from "@/components/ui/shadcn/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/shadcn/dropdown-menu";
 import { Check } from "lucide-react";
-import { IconFilterOff, IconFilterOn, IconL_ChevronDown } from "@/components/ui/icons/normal";
+import { IconFilterGreen, IconFilterOff, IconFilterOn, IconL_ChevronDown } from "@/components/ui/icons/normal";
 import { filterActions } from "@/store/4-file-filters";
 import { dialogEditFiltersOpenAtom } from "@/store/2-ui-atoms";
 
@@ -44,7 +44,7 @@ export function FileFilterDropdown() {
         <div className="flex items-center">
             <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
                 <DropdownMenuTrigger asChild>
-                    <Button className="h-6 pl-2! pr-1.5! rounded rounded-r-none select-none" variant="outline" size="sm" title="Current filter">
+                    <Button className="h-6 pl-2! pr-1.5! rounded rounded-r-none gap-1 select-none" variant="outline" size="sm" title="Current filter">
                         <span className="max-w-[150px] truncate text-xs font-normal">
                             {activeFilter ? activeFilter.name : "All files"}
                         </span>
@@ -84,8 +84,8 @@ export function FileFilterDropdown() {
 
             <Button className="size-6 rounded rounded-l-none border border-l-0" variant="ghost" size="icon" onClick={handleToggleFilter} disabled={!hasfilters} title={selectedFilterId ? "Disable filter (Show all files)" : "Enable filter"}>
                 {selectedFilterId
-                    ? <IconFilterOff className="size-3 opacity-70" />
-                    : <IconFilterOn className="size-3 opacity-70" />
+                    ? <IconFilterGreen className="size-3 text-foreground/70" />
+                    : <IconFilterOn className="size-3 text-foreground/70" />
                 }
             </Button>
         </div>

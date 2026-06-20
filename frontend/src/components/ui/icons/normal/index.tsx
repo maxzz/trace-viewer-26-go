@@ -10,6 +10,7 @@ export * from "./22-search";
 export * from "./22-filter";
 export * from "./22-filter-off";
 export * from "./22-filter-on";
+export * from "./22-filter-green";
 export * from "./24-refresh";
 export * from "./25-sliders";
 export * from "./26-broken-img";
