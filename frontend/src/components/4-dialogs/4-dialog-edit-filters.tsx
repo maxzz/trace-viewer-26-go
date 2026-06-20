@@ -130,7 +130,7 @@ function FilterRow({ filter, onDelete, isNameInvalid, isPatternInvalid }: { filt
 
     return (
         <Reorder.Item
-            className="mb-1 bg-background flex items-center select-none"
+            className="mb-1.    5 bg-background flex items-center select-none"
             id={filter.id}
             value={filter}
             dragListener={false}
@@ -140,9 +140,9 @@ function FilterRow({ filter, onDelete, isNameInvalid, isPatternInvalid }: { filt
                 <GripVertical className="size-3 text-muted-foreground" />
             </div>
 
-            <div className="flex-1 grid grid-cols-2 gap-1">
+            <div className="flex-1 grid grid-cols-2 gap-0.5">
                 <Input
-                    className={`h-8 ${isNameInvalid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    className={`h-7 ${isNameInvalid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder="Filter Name"
                     value={filter.name}
                     onChange={(e) => filterActions.updateFilter(filter.id, { name: e.target.value })}
@@ -198,27 +198,26 @@ function InputPattern({ filterId, pattern, isPatternInvalid }: { filterId: strin
     }
 
     return (
-        <div className="relative">
+        <div className="h-7 relative flex items-center">
             <Input
-                className={`h-8 pr-8 ${isPatternInvalid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                className={classNames("h-7 rounded-r-none py-0 font-mono", isPatternInvalid ? 'border-red-500 focus-visible:ring-red-500' : '')}
                 placeholder={isRegex ? "Regex pattern" : "Pattern (e.g. *.log)"}
                 value={localValue}
                 onChange={(e) => handlePatternChange(e.target.value)}
                 {...turnOffAutoComplete}
             />
-            <div className="absolute right-0 top-0">
-                <Button
-                    className={`border-0 border-l border-l-border rounded-r-[3px] rounded-l-none ${isRegex ? 'text-primary bg-primary/10' : 'hover:bg-primary/5'} ${isPatternInvalid ? 'border-l-red-500' : ''}`}
-                    variant={isRegex ? "outline" : "ghost"}
-                    size="icon-sm"
-                    onClick={handleToggleRegex}
-                    title="Use regex pattern"
-                    type="button"
-                    tabIndex={-1}
-                >
-                    <Regex className={`size-3 ${isRegex ? 'text-primary' : 'text-muted-foreground/50'}`} />
-                </Button>
-            </div>
+
+            <Button
+                className={classNames("h-7 border border-l-0 rounded-r rounded-l-none font-mono", isRegex ? 'text-primary bg-primary/10' : 'hover:bg-primary/5', isPatternInvalid ? 'border-l-red-500' : '')}
+                variant={isRegex ? "outline" : "ghost"}
+                size="icon-sm"
+                onClick={handleToggleRegex}
+                title="Use regex pattern"
+                type="button"
+                tabIndex={-1}
+            >
+                <Regex className={`size-3 ${isRegex ? 'text-primary' : 'text-muted-foreground/50'}`} />
+            </Button>
         </div>
     );
 }
@@ -242,16 +241,16 @@ function FilterExamples({ className, ...rest }: ComponentProps<"div">) {
                     <CopyableCode text="DpHost" /> wildcard to include files with name <span className={codeClasses}>DpHost</span>
                 </li>
                 <li>
-                    <CopyableCode text="*DpHost*" /> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="^(?!.*D[Pp][^A])" /> without DpHost and callbacks
                 </li>
             </ul>
         </div>
     );
 }
 
-const codeClasses = "px-1 bg-muted outline rounded";
+const codeClasses = "px-1 py-0.5 bg-muted outline rounded";
 
-function CopyableCode({ text }: { text: string }) {
+function CopyableCode({ text }: { text: string; }) {
     const [copied, setCopied] = useState(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -266,7 +265,7 @@ function CopyableCode({ text }: { text: string }) {
 
     return (
         <span
-            className={classNames(codeClasses, "inline-flex cursor-pointer select-none")}
+            className={classNames(codeClasses, "font-mono inline-flex items-center cursor-pointer select-none")}
             onClick={handleClick}
             title="Click to copy"
         >
