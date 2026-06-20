@@ -23,7 +23,12 @@ export function App() {
             <DropItDoc doSetFilesFromDropAtom={doSetFilesFrom_Dnd_Atom} />
 
             {/* <SpyAllIcons includeSvgSymbols /> */}
-            <TraceViewerApp />
+            <div className="h-full text-xs flex flex-col overflow-hidden">
+                <HeaderRow />
+                <TraceViewerApp />
+                <Footer />
+            </div>
+
             <AppGlobalsAndDialogs />
         </div>
     );
@@ -37,42 +42,38 @@ export function TraceViewerApp() {
     useAtomValue(listenerToBuildAllTimesEffectAtom);
 
     return (
-        <div className="h-full text-xs flex flex-col overflow-hidden">
-            <HeaderRow />
 
-            <div className="flex-1 flex flex-col overflow-hidden relative">
-                <AnimatePresence initial={false} mode="wait">
-                    {!showTraceMainView
-                        ? (
-                            <motion.div
-                                key="no-files"
-                                className="absolute inset-0"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <NoFilesView loading={isLoadingFiles && fileCount > 0} />
-                            </motion.div>
-                        )
-                        : (
-                            <motion.div
-                                key="trace-main"
-                                className="absolute inset-0"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                            >
-                                <TraceMainView />
-                            </motion.div>
-                        )
-                    }
-                </AnimatePresence>
-            </div>
-
-            <Footer />
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+            <AnimatePresence initial={false} mode="wait">
+                {!showTraceMainView
+                    ? (
+                        <motion.div
+                            key="no-files"
+                            className="absolute inset-0"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <NoFilesView loading={isLoadingFiles && fileCount > 0} />
+                        </motion.div>
+                    )
+                    : (
+                        <motion.div
+                            key="trace-main"
+                            className="absolute inset-0"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <TraceMainView />
+                        </motion.div>
+                    )
+                }
+            </AnimatePresence>
         </div>
+
     );
 }
 
