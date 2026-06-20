@@ -1,4 +1,4 @@
-import * as React from "react"; // 01.14.26
+import * as React from "react"; // 01.14.26, 06.19.26
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 
@@ -61,12 +61,20 @@ function DialogContent({
     children,
     showCloseButton = true,
     onPointerDownOutside,
+    onOpenAutoFocus,
     modal = false,
     ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
     showCloseButton?: boolean;
     modal?: boolean;
 }) {
+    function handleOpenAutoFocus(e: Event) {
+        onOpenAutoFocus?.(e);
+        if (e.defaultPrevented) {
+            (e.currentTarget as HTMLElement).focus();
+        }
+    }
+
     return (
         <DialogPortal data-slot="dialog-portal">
             <DialogOverlay />
@@ -102,6 +110,8 @@ function DialogContent({
                     className
                 )}
                 onPointerDownOutside={modal ? preventClose : onPointerDownOutside}
+                onOpenAutoFocus={handleOpenAutoFocus}
+                tabIndex={-1}
                 {...props}
             >
                 {children}
