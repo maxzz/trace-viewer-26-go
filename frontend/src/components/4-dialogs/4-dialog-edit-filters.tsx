@@ -266,37 +266,24 @@ function CopyableCode({ text }: { text: string }) {
 
     return (
         <span
-            className={classNames(codeClasses, "inline-flex cursor-pointer select-none")}
+            className={classNames(codeClasses, "relative inline cursor-pointer select-none")}
             onClick={handleClick}
             title="Click to copy"
         >
-            <AnimatePresence mode="wait" initial={false}>
-                {copied
-                    ? (
-                        <motion.span
-                            key="copied"
-                            className="inline-flex items-center gap-1 text-green-600"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.15 }}
-                        >
-                            <Check className="size-3" />
-                            Copied
-                        </motion.span>
-                    )
-                    : (
-                        <motion.span
-                            key="text"
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            transition={{ duration: 0.15 }}
-                        >
-                            {text}
-                        </motion.span>
-                    )
-                }
+            {text}
+            <AnimatePresence initial={false}>
+                {copied && (
+                    <motion.span
+                        className="absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded bg-muted px-1.5 py-0.5 text-green-600 outline shadow-sm"
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        <Check className="size-3" />
+                        Copied
+                    </motion.span>
+                )}
             </AnimatePresence>
         </span>
     );
