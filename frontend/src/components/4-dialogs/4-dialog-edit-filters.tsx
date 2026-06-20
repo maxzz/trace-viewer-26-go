@@ -140,9 +140,9 @@ function FilterRow({ filter, onDelete, isNameInvalid, isPatternInvalid }: { filt
                 <GripVertical className="size-3 text-muted-foreground" />
             </div>
 
-            <div className="flex-1 grid grid-cols-2 gap-0.5">
+            <div className="flex-1 grid grid-cols-2">
                 <Input
-                    className={`h-7 ${isNameInvalid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    className={classNames("h-7 rounded-none focus:ring-0 focus:outline-red-500", isNameInvalid ? 'border-red-500 focus-visible:ring-red-500' : '')}
                     placeholder="Filter Name"
                     value={filter.name}
                     onChange={(e) => filterActions.updateFilter(filter.id, { name: e.target.value })}
