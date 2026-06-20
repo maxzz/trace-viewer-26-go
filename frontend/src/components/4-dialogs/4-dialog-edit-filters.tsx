@@ -1,13 +1,13 @@
-import { type ComponentProps, useCallback, useEffect, useState } from "react";
+import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { useAtom } from "jotai";
 import { useSnapshot } from "valtio";
 import { classNames } from "@/utils";
 import { turnOffAutoComplete } from "@/utils/disable-hidden-children";
-import { Reorder, useDragControls } from "motion/react";
+import { AnimatePresence, motion, Reorder, useDragControls } from "motion/react";
 import { Button } from "../ui/shadcn/button";
 import { Input } from "../ui/shadcn/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/shadcn/dialog";
-import { GripVertical, Trash2, Plus, Regex } from "lucide-react";
+import { GripVertical, Trash2, Plus, Regex, Check } from "lucide-react";
 import { appSettings, type FileFilter } from "../../store/1-ui-settings";
 import { dialogEditFiltersOpenAtom } from "../../store/2-ui-atoms";
 import { filterActions } from "../../store/4-file-filters";
@@ -233,16 +233,16 @@ function FilterExamples({ className, ...rest }: ComponentProps<"div">) {
             </p>
             <ul className="list-disc list-inside space-y-1.5">
                 <li>
-                    <span className={codeClasses}>^(?!.*DpHost).*$</span> regex to exclude files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="^(?!.*DpHost).*$" /> regex to exclude files with name <span className={codeClasses}>DpHost</span>
                 </li>
                 <li>
-                    <span className={codeClasses}>DpHost</span> regex to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="DpHost" /> regex to include files with name <span className={codeClasses}>DpHost</span>
                 </li>
                 <li>
-                    <span className={codeClasses}>DpHost</span> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="DpHost" /> wildcard to include files with name <span className={codeClasses}>DpHost</span>
                 </li>
                 <li>
-                    <span className={codeClasses}>*DpHost*</span> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="*DpHost*" /> wildcard to include files with name <span className={codeClasses}>DpHost</span>
                 </li>
             </ul>
         </div>
@@ -250,3 +250,54 @@ function FilterExamples({ className, ...rest }: ComponentProps<"div">) {
 }
 
 const codeClasses = "px-1 bg-muted outline rounded";
+
+function CopyableCode({ text }: { text: string }) {
+    const [copied, setCopied] = useState(false);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    useEffect(() => () => clearTimeout(timeoutRef.current), []);
+
+    function handleClick() {
+        void navigator.clipboard.writeText(text);
+        clearTimeout(timeoutRef.current);
+        setCopied(true);
+        timeoutRef.current = setTimeout(() => setCopied(false), 1000);
+    }
+
+    return (
+        <span
+            className={classNames(codeClasses, "inline-flex cursor-pointer select-none")}
+            onClick={handleClick}
+            title="Click to copy"
+        >
+            <AnimatePresence mode="wait" initial={false}>
+                {copied
+                    ? (
+                        <motion.span
+                            key="copied"
+                            className="inline-flex items-center gap-1 text-green-600"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.15 }}
+                        >
+                            <Check className="size-3" />
+                            Copied
+                        </motion.span>
+                    )
+                    : (
+                        <motion.span
+                            key="text"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.15 }}
+                        >
+                            {text}
+                        </motion.span>
+                    )
+                }
+            </AnimatePresence>
+        </span>
+    );
+}
