@@ -19,13 +19,13 @@ export function ErrorsNavControls() {
     const disabled = !currentFileState || total === 0;
 
     return (
-        <div className="min-w-12 h-6 border flex items-center rounded" data-disabled={disabled} title={disabled ? "No errors in this file" : `Error ${current} of ${total}`}>
-            <div className={classNames("px-1 h-6 text-[10px] font-mono tabular-nums text-muted-foreground border-y border-border select-none flex items-center justify-center", disabled && "opacity-50")}>
+        <div className="min-w-12 h-6 border rounded flex items-center" data-disabled={disabled} title={disabled ? "No errors in this file" : `Error ${current} of ${total}`}>
+            <div className={classNames("px-1 h-6 font-mono tabular-nums text-[10px] text-muted-foreground border-y border-border select-none flex items-center justify-center", disabled && "opacity-50")}>
                 {current}/{total}
             </div>
 
             <Button
-                className="group size-6 rounded-r-none focus-visible:ring-0"
+                className="group size-6 focus-visible:ring-0 rounded-r-none"
                 variant="ghost"
                 size="icon"
                 title="Previous error"
@@ -36,7 +36,7 @@ export function ErrorsNavControls() {
             </Button>
 
             <Button
-                className="group size-6 rounded-l-none focus-visible:ring-0"
+                className="group size-6 focus-visible:ring-0 rounded-l-none"
                 variant="ghost"
                 size="icon"
                 title="Next error"
