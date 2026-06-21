@@ -86,7 +86,7 @@ type ToggleLabelSwitchProps = {
 function ToggleLabelSwitch({ label, checked, disabled, title, onCheckedChange }: ToggleLabelSwitchProps) {
     return (
         <Label
-            className={classNames("pl-1.5 pr-px h-6 font-normal border-border rounded border select-none gap-0", disabled && "opacity-50")}
+            className={classNames("pl-1.5 pr-px h-6 font-normal border-border border rounded select-none gap-0", disabled && "opacity-50")}
             data-disabled={disabled}
             title={title}
         >

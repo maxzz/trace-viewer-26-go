@@ -25,7 +25,7 @@ function TraceFooter() {
             <ErrorBanner />
 
             {/* Metadata Bar */}
-            <div className="p-2 pt-1 flex items-center gap-1 select-none">
+            <div className="p-2 pt-1 select-none flex items-center gap-1">
                 <div className="ml-2 text-[10px] flex items-center gap-1.5">
                     <FilesCount />
                     <BlockedCount />
@@ -149,7 +149,7 @@ function ErrorBanner() {
     }
 
     return (
-        <div className="p-4 bg-red-100 border-red-500 text-red-700 border-l-4" role="alert">
+        <div className="p-4 text-red-700 bg-red-100 border-red-500 border-l-4" role="alert">
             <p className="font-bold">Error loading trace</p>
             <p>{error}</p>
         </div>

@@ -43,7 +43,7 @@ export function TraceViewerApp() {
 
     return (
 
-        <div className="relative overflow-hidden flex-1 flex flex-col">
+        <div className="flex-1 relative overflow-hidden flex flex-col">
             <AnimatePresence initial={false} mode="wait">
                 {!showTraceMainView
                     ? (

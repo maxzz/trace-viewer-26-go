@@ -27,7 +27,7 @@ export function FileList() {
     );
 
     return (
-        <div className="h-full flex flex-row bg-muted/10 select-none">
+        <div className="h-full bg-muted/10 select-none flex flex-row">
             {onLeft && <AllTimesPanel />}
 
             <div className="flex-1 min-w-0 h-full focus:outline-none focus-visible:outline-none flex flex-col" tabIndex={-1}>

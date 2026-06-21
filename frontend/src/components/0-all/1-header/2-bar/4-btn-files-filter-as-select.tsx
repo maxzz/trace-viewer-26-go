@@ -44,8 +44,8 @@ export function FileFilterDropdown() {
         <div className="flex items-center">
             <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
                 <DropdownMenuTrigger asChild>
-                    <Button className="h-6 pl-2! pr-1.5! rounded rounded-r-none gap-1 select-none" variant="outline" size="sm" title="Current filter">
-                        <span className="max-w-[150px] truncate text-xs font-normal">
+                    <Button className="pl-2! pr-1.5! h-6 rounded rounded-r-none select-none gap-1" variant="outline" size="sm" title="Current filter">
+                        <span className="max-w-[150px] text-xs font-normal truncate">
                             {activeFilter ? activeFilter.name : "All files"}
                         </span>
                         <IconL_ChevronDown className={`size-3 opacity-50 transition-all duration-200 ${isOpen ? 'scale-y-[-1] opacity-100' : ''}`} />
@@ -82,7 +82,7 @@ export function FileFilterDropdown() {
                 </DropdownMenuContent>
             </DropdownMenu>
 
-            <Button className="size-6 rounded rounded-l-none border border-l-0" variant="ghost" size="icon" onClick={handleToggleFilter} disabled={!hasfilters} title={selectedFilterId ? "Disable filter (Show all files)" : "Enable filter"}>
+            <Button className="size-6 border border-l-0 rounded rounded-l-none" variant="ghost" size="icon" onClick={handleToggleFilter} disabled={!hasfilters} title={selectedFilterId ? "Disable filter (Show all files)" : "Enable filter"}>
                 {selectedFilterId
                     ? <IconFilterGreen className="size-3 text-foreground/70" />
                     : <IconFilterOn className="size-3 text-foreground/70" />
