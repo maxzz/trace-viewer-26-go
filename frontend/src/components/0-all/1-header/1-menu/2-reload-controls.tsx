@@ -125,10 +125,10 @@ export function FileReloadControls() {
     }
 
     return (
-        <div className="h-6 border flex items-center rounded" title="File Updates">
+        <div className="h-6 border rounded flex items-center" title="File Updates">
 
             <Button
-                className="group size-6 rounded-l rounded-r-none active:scale-75 focus:ring-0"
+                className="group size-6 active:scale-75 focus:ring-0 rounded-l rounded-r-none"
                 variant="ghost"
                 size="icon"
                 onClick={() => setAutoEnabled((value) => !value)}
@@ -142,7 +142,7 @@ export function FileReloadControls() {
             </Button>
 
             <Button
-                className="group size-6 border-l-0 rounded-none active:scale-75 focus:ring-0"
+                className="group size-6 active:scale-75 focus:ring-0 border-l-0 rounded-none"
                 variant="ghost"
                 size="icon"
                 onClick={() => { appSettings.fileUpdates.sizeMonitorEnabled = !fileUpdates.sizeMonitorEnabled; }}
@@ -172,7 +172,7 @@ export function FileReloadControls() {
                         transition={{ duration: 0.2 }}
                     >
                         <Button
-                            className="group size-6 border-l-0 rounded-r rounded-l-none active:scale-75 focus:ring-0"
+                            className="group size-6 active:scale-75 focus:ring-0 border-l-0 rounded-r rounded-l-none"
                             variant="ghost"
                             size="icon"
                             onClick={cancelAllFileReloads}

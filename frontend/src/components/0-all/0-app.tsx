@@ -23,7 +23,7 @@ export function App() {
             <DropItDoc doSetFilesFromDropAtom={doSetFilesFrom_Dnd_Atom} />
 
             {/* <SpyAllIcons includeSvgSymbols /> */}
-            <div className="h-full text-xs flex flex-col overflow-hidden">
+            <div className="h-full text-xs overflow-hidden flex flex-col">
                 <HeaderRow />
                 <TraceViewerApp />
                 <Footer />
@@ -43,7 +43,7 @@ export function TraceViewerApp() {
 
     return (
 
-        <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="relative overflow-hidden flex-1 flex flex-col">
             <AnimatePresence initial={false} mode="wait">
                 {!showTraceMainView
                     ? (
@@ -82,7 +82,7 @@ function NoFilesView({ loading }: { loading?: boolean; }) {
         <div className="absolute inset-0 bg-foreground/5 flex flex-col items-center justify-center pointer-events-none">
             {!loading && (<>
                 <IconBinocular className="size-8" />
-                <p className="max-w-76 text-center text-xs text-foreground">
+                <p className="max-w-76 text-xs text-center text-foreground">
                     Drag and drop the .trc3 file, folder, ZIP archive, or use the file selection dialog to view the traces.
                 </p>
             </>)}

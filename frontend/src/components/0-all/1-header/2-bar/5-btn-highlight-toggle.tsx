@@ -12,14 +12,14 @@ export function ButtonHighlightToggle() {
     const setEditHighlightsOpen = useSetAtom(dialogEditHighlightsOpenAtom);
 
     return (
-        <div className="flex items-center rounded border border-border overflow-hidden h-6">
+        <div className="h-6 border border-border rounded overflow-hidden flex items-center">
             <Button 
-                className="p-0 size-6 rounded-none border-r border-r-border" 
+                className="p-0 size-6 border-r border-r-border rounded-none" 
                 variant="ghost" 
                 onClick={highlightActions.toggleHighlight}
                 title={highlightEnabled ? "Disable highlighting" : "Enable highlighting"}
             >
-               <Highlighter className={`size-3.5 ${highlightEnabled ? "text-foreground dark:text-sky-300 fill-sky-200 dark:fill-sky-500 opacity-100" : "opacity-40"}`} />
+               <Highlighter className={`size-3.5 ${highlightEnabled ? "text-foreground fill-sky-200 opacity-100 dark:text-sky-300 dark:fill-sky-500" : "opacity-40"}`} />
             </Button>
 
             <Button 

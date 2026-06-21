@@ -16,7 +16,7 @@ export function TopMenu() {
     const setEditHighlightsOpen = useSetAtom(dialogEditHighlightsOpenAtom);
 
     return (
-        <Menubar className="px-2 border-none shadow-none rounded-none bg-transparent">
+        <Menubar className="px-2 bg-transparent border-none rounded-none shadow-none">
 
             <MenubarMenu>
                 <MenubarTrigger>

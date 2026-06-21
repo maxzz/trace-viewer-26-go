@@ -5,7 +5,7 @@ import { canGoBackAtom, canGoForwardAtom, historyActions } from "@/store/traces-
 
 export function HistoryButtons() {
     return (
-        <div className="h-6 border flex items-center rounded" title="File Navigation History">
+        <div className="h-6 border rounded flex items-center" title="File Navigation History">
             <ButtonHistoryBack />
             <ButtonHistoryForward />
         </div>
@@ -33,7 +33,7 @@ export function ButtonHistoryForward() {
     const canGoForward = useAtomValue(canGoForwardAtom);
     return (
         <Button
-            className="group size-6 rounded-r rounded-l-none border-l-0"
+            className="group size-6 border-l-0 rounded-r rounded-l-none"
             variant="ghost"
             size="icon"
             onClick={historyActions.goForward}
