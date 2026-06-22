@@ -9,7 +9,7 @@ import { ZipLoadingOverlay } from "../ui/local-ui/zip-loading-overlay";
 import { listenerToBuildAllTimesEffectAtom } from "@/store/traces-store/3-2-all-times-listener";
 import { filesCountAtom } from "@/store/6-filtered-files";
 import { isLoadingFilesAtom } from "@/store/traces-store/8-1-load-files";
-import { HeaderRow } from "./1-header";
+import { HeaderRow } from "./1-header/0-all-menu-monitor/0-all-header";
 import { Footer } from "./2-footer";
 import { TraceMainView } from "./6-resizable-panels";
 // import { SpyAllIcons } from "@/utils/util-hooks/spy-all-icons";

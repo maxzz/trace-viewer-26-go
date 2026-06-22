@@ -1,12 +1,12 @@
-import { TopMenu } from "./1-header/1-menu/1-all-menu";
-import { FileReloadControls } from "./1-header/1-menu/2-reload-controls";
-import { HistoryButtons } from "./1-header/2-bar/1-btn-nav-history";
-import { ErrorsNavControls } from "./1-header/2-bar/2-btn-nav-errors";
-import { ToggleErrorsOnly, ToggleErrorsWithoutNoise, ToggleThreadOnly } from "./1-header/2-bar/3-top-menu-toggles";
-import { FileFilterDropdown } from "./1-header/2-bar/4-btn-files-filter-as-select";
-import { ParsingFilesProgress, TimelineBuildProgress } from "./1-header/1-menu/3-loading-progress";
-import { ButtonHighlightToggle } from "./1-header/2-bar/5-btn-highlight-toggle";
-import { ButtonThemeToggle } from "./1-header/2-bar/8-btn-theme-toggle";
+import { TopMenu } from "./1-all-menu";
+import { FileReloadControls } from "./2-reload-controls";
+import { HistoryButtons } from "../2-right-toolbar/1-btn-nav-history";
+import { ErrorsNavControls } from "../2-right-toolbar/2-btn-nav-errors";
+import { ToggleErrorsOnly, ToggleErrorsWithoutNoise, ToggleThreadOnly } from "../2-right-toolbar/3-top-menu-toggles";
+import { FileFilterDropdown } from "../2-right-toolbar/4-btn-files-filter-as-select";
+import { ParsingFilesProgress, TimelineBuildProgress } from "./3-loading-progress";
+import { ButtonHighlightToggle } from "../2-right-toolbar/5-btn-highlight-toggle";
+import { ButtonThemeToggle } from "../2-right-toolbar/8-btn-theme-toggle";
 
 export function HeaderRow() {
     return (

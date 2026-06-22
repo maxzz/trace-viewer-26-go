@@ -6,7 +6,7 @@ import { turnOffAutoComplete } from "@/utils/disable-hidden-children";
 import { AnimatePresence, motion, Reorder, useDragControls } from "motion/react";
 import { Button } from "../ui/shadcn/button";
 import { Input } from "../ui/shadcn/input";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/shadcn/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/shadcn/dialog";
 import { GripVertical, Trash2, Plus, Regex, Check } from "lucide-react";
 import { appSettings, type FileFilter } from "../../store/1-ui-settings";
 import { dialogEditFiltersOpenAtom } from "../../store/2-ui-atoms";
@@ -69,18 +69,29 @@ export function DialogEditFilters() {
 
     return (
         <Dialog open={open} onOpenChange={onDlgOpenChange}>
-            <DialogContent className="max-w-150!" aria-describedby={undefined} onOpenAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent className="max-w-150! outline-none" aria-describedby={undefined} onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle className="select-none">
                         Filters
                     </DialogTitle>
+
+                    <div className="flex items-center gap-x-1">
+                        <DialogDescription className="text-xs text-muted-foreground">
+                            Filters are used to exclude files from the loaded files list. Use regex or wildcard patterns to match the file names.
+                        </DialogDescription>
+
+                        <Button className="mx-5 mr-7 h-7" variant="outline" size="xs" onClick={() => filterActions.addFilter("", "")}>
+                            <Plus className="size-3.5" />
+                            Add Filter
+                        </Button>
+                    </div>
                 </DialogHeader>
 
-                <div>
+                <div className="-mt-3">
                     {/* Show header line for the filters list with column names located over the filter name and pattern columns */}
                     {fileFilters.length !== 0 && <Header />}
 
-                    <div className="-mr-2 pr-2 py-1 max-h-[60vh] overflow-y-auto">
+                    <div className="-mx-2 pr-2 py-1">
                         <Reorder.Group className="m-0 p-0" axis="y" values={fileFilters as unknown as FileFilter[]} onReorder={onItemsReorder}>
                             {fileFilters.map(
                                 (filter) => (
@@ -95,16 +106,16 @@ export function DialogEditFilters() {
                             )}
                         </Reorder.Group>
 
-                        <Button className="mt-1 mx-5 h-7" variant="outline" size="xs" onClick={() => filterActions.addFilter("", "")}>
+                        {/* <Button className="mt-1 mx-5 h-7" variant="outline" size="xs" onClick={() => filterActions.addFilter("", "")}>
                             <Plus className="size-3.5" />
                             Add Filter
-                        </Button>
+                        </Button> */}
                     </div>
 
                     <FilterExamples />
                 </div>
 
-                <DialogFooter className="justify-center!">
+                <DialogFooter className="mt-2 justify-center!">
                     <Button variant="outline" onClick={onDlgClose}>Close</Button>
                 </DialogFooter>
             </DialogContent>
@@ -114,12 +125,12 @@ export function DialogEditFilters() {
 
 function Header() {
     return (
-        <div className="mt-4 px-5 grid grid-cols-2 gap-1 select-none">
+        <div className="mt-4 px-5 grid grid-cols-[170px_1fr] gap-1 select-none">
             <div className="text-xs font-semibold">
-                Name
+                Filter name
             </div>
             <div className="text-xs font-semibold">
-                Pattern
+                Match pattern
             </div>
         </div>
     );
@@ -140,7 +151,7 @@ function FilterRow({ filter, onDelete, isNameInvalid, isPatternInvalid }: { filt
                 <GripVertical className="size-3 text-muted-foreground" />
             </div>
 
-            <div className="flex-1 grid grid-cols-2 gap-1">
+            <div className="flex-1 grid grid-cols-[170px_1fr] gap-1">
                 <Input
                     className={`h-8 ${isNameInvalid ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder="Filter Name"
@@ -227,31 +238,32 @@ function InputPattern({ filterId, pattern, isPatternInvalid }: { filterId: strin
 
 function FilterExamples({ className, ...rest }: ComponentProps<"div">) {
     return (
-        <div className={classNames("mx-5 mt-1 mb-1 text-xs text-muted-foreground text-balance", className)} {...rest}>
-            <p className="mb-1.5">
+        <div className={classNames("text-xs text-muted-foreground text-balance", className)} {...rest}>
+            <p className="mb-2">
                 Examples (wildcards or regex):
             </p>
-            <ul className="list-disc list-inside space-y-1.5">
+            <ul className="pl-4 flex flex-col gap-y-3">
                 <li>
-                    <CopyableCode text="^(?!.*DpHost).*$" /> regex to exclude files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="^(?!.*(DpHostW|D[pP][^AP]))" /> Show only <span className={sampleClasses}>DpAgentOtsPlugin</span> and <span className={sampleClasses}>DPPmatHelper</span>
                 </li>
                 <li>
-                    <CopyableCode text="DpHost" /> regex to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="^(?!.*(DpHost|DPCard))" /> Hide <span className={sampleClasses}>DpHost</span> and <span className={sampleClasses}>DPCard</span>
                 </li>
                 <li>
-                    <CopyableCode text="DpHost" /> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="^(?!.*DpHost).*$" /> regex to exclude files with name <span className={sampleClasses}>DpHost</span>
                 </li>
                 <li>
-                    <CopyableCode text="*DpHost*" /> wildcard to include files with name <span className={codeClasses}>DpHost</span>
+                    <CopyableCode text="DpCard" /> Show only <span className={sampleClasses}>DpCard</span>
                 </li>
             </ul>
         </div>
     );
 }
 
-const codeClasses = "px-1 bg-muted outline rounded";
+const codeClasses = "px-1.5 py-1 font-mono bg-muted/70 outline rounded";
+const sampleClasses = "px-1 py-0.5 font-semibold bg-muted/75 rounded";
 
-function CopyableCode({ text }: { text: string }) {
+function CopyableCode({ text }: { text: string; }) {
     const [copied, setCopied] = useState(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -266,7 +278,7 @@ function CopyableCode({ text }: { text: string }) {
 
     return (
         <span
-            className={classNames(codeClasses, "relative inline cursor-pointer select-none")}
+            className={classNames(codeClasses, "relative mr-1 inline cursor-pointer select-none")}
             onClick={handleClick}
             title="Click to copy"
         >
@@ -274,7 +286,7 @@ function CopyableCode({ text }: { text: string }) {
             <AnimatePresence initial={false}>
                 {copied && (
                     <motion.span
-                        className="absolute top-1/2 left-0 px-1.5 py-px -translate-y-1/2 text-green-600 bg-muted rounded shadow-sm flex items-center gap-1 z-10 whitespace-nowrap outline"
+                        className="absolute top-1/2 left-0 -translate-y-1/2 text-green-600 bg-muted rounded shadow-sm flex items-center gap-1 z-10 whitespace-nowrap outline"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
