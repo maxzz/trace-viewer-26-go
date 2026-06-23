@@ -33,10 +33,8 @@ export function formatErrorLineContent(content: string): string {
         const singleIntMatch = content.match(/^\s*(-?\d+)\s*$/);
         if (singleIntMatch) {
             try {
-                const dec = parseInt(singleIntMatch[1], 10);
-                const hex = (dec >>> 0).toString(16).toUpperCase();
-                const errorCode = `0x${hex}`;
-                return errorCode === NOISE_ERROR_CODE ? NOISE_ERROR_CODE : errorCode; // Return the same value if it's a noise error, so comparison will work on value without comparing the string.
+                const errorCode = decimalToErrorCode(singleIntMatch[1]);
+                return errorCode === NOISE_ERROR_CODE ? NOISE_ERROR_CODE : errorCode;
             } catch {
                 // If conversion fails, return original
             }
@@ -47,3 +45,21 @@ export function formatErrorLineContent(content: string): string {
 }
 
 export const NOISE_ERROR_CODE = "0x80070002";
+
+function decimalToErrorCode(decimalString: string): string {
+    const dec = parseInt(decimalString, 10);
+    const hex = (dec >>> 0).toString(16).toUpperCase();
+    return `0x${hex}`;
+}
+
+// -2147024894 DPFPTokenIsEnrolled failed
+// -2147024893 DpAgent64::InstallFirefoxCertificate::
+// -2147467263 m_cpWrappedProvider->Advise
+// -2147023673 httpcall[com]
+// -2147023673 hr
+// 0x80004003
+
+/*
+TODO: collect all error codes and add to a map, so we can use it to format the error line content.
+when all files loaded, we can collect all error codes and add to a map, so we can use it to format the error line content.
+*/
