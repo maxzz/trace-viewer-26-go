@@ -5,6 +5,7 @@ export const dialogEditFiltersOpenAtom = atom(false);
 export const dialogBlockLoadFiltersOpenAtom = atom(false);
 export const dialogOptionsOpenAtom = atom(false);
 export const dialogAboutOpenAtom = atom(false);
+export const dialogCalculatorOpenAtom = atom(false);
 
 export const dialogFileHeaderOpenAtom = atom<string | null>(null);
 

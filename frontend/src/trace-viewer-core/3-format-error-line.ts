@@ -4,9 +4,9 @@
  * @returns The formatted content.
  * @example
  * formatErrorLineContent("hResult=2147500037") // "hResult: 0x80004005"
- * formatErrorLineContent("hResult: -2147500037") // "hResult: 0x80004005 (-2147500037)"
- * formatErrorLineContent("-2147024894 DPFPTokenIsEnrolled failed") // "0x80070002 (-2147024894) DPFPTokenIsEnrolled failed"
- * formatErrorLineContent("m_cpWrappedProvider->Advise -2147467263") // "m_cpWrappedProvider->Advise 0x80004001 (-2147467263)"
+ * formatErrorLineContent("hResult: -2147500037") // "hResult: 0x80004005"
+ * formatErrorLineContent("-2147024894 DPFPTokenIsEnrolled failed") // "0x80070002 DPFPTokenIsEnrolled failed"
+ * formatErrorLineContent("m_cpWrappedProvider->Advise -2147467263") // "m_cpWrappedProvider->Advise 0x80004001"
  */
 export function formatErrorLineContent(content: string): string {
 
@@ -17,17 +17,17 @@ export function formatErrorLineContent(content: string): string {
         try {
             const dec = parseInt(decimalString, 10);
             const normalizedSeparator = separator.includes(':') ? ': ' : separator.includes('=') ? '=' : ' ';
-            const formattedCode = dec < 0 ? formatNegativeErrorCode(dec) : `0x${unsignedHexFromSignedDecimal(dec)}`;
+            const formattedCode = signedDecimalToErrorHex(dec);
             return `hResult${normalizedSeparator}${formattedCode}`;
         } catch {
             return match;
         }
     });
 
-    result = result.replace(/(?<![\d(])-(\d+)(?![\d.])/g, (match) => {
+    result = result.replace(/(?<!\d)-(\d+)(?![\d.])/g, (match) => {
         try {
             const dec = parseInt(match, 10);
-            return formatNegativeErrorCode(dec);
+            return signedDecimalToErrorHex(dec);
         } catch {
             return match;
         }
@@ -38,13 +38,49 @@ export function formatErrorLineContent(content: string): string {
 
 export const NOISE_ERROR_CODE = "0x80070002";
 
-function formatNegativeErrorCode(dec: number): string {
-    const hex = unsignedHexFromSignedDecimal(dec);
-    return `0x${hex} (${dec})`;
+export function signedDecimalToErrorHex(dec: number): string {
+    return `0x${unsignedHexFromSignedDecimal(dec)}`;
+}
+
+export function errorHexToSignedDecimal(hexValue: string): number | undefined {
+    const trimmed = hexValue.trim();
+    if (!trimmed) {
+        return undefined;
+    }
+
+    const match = trimmed.match(/^0x([0-9A-Fa-f]+)$/i);
+    if (!match) {
+        return undefined;
+    }
+
+    const unsigned = parseInt(match[1], 16);
+    if (!Number.isFinite(unsigned)) {
+        return undefined;
+    }
+
+    return toSignedInt32(unsigned);
+}
+
+export function parseSignedDecimalInput(value: string): number | undefined {
+    const trimmed = value.trim();
+    if (!/^-?\d+$/.test(trimmed)) {
+        return undefined;
+    }
+
+    const parsed = parseInt(trimmed, 10);
+    if (!Number.isFinite(parsed)) {
+        return undefined;
+    }
+
+    return parsed;
 }
 
 function unsignedHexFromSignedDecimal(dec: number): string {
     return (dec >>> 0).toString(16).toUpperCase();
+}
+
+function toSignedInt32(value: number): number {
+    return value | 0;
 }
 
 /*

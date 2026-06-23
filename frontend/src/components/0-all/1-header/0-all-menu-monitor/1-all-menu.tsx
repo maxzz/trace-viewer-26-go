@@ -5,7 +5,7 @@ import { currentFileStateAtom } from "@/store/traces-store/0-1-files-current-sta
 import { closeAllFiles, closeFile, closeOtherFiles } from "@/store/traces-store/0-2-files-actions";
 import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
 import { filesCountAtom } from "@/store/6-filtered-files";
-import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom } from "@/store/2-ui-atoms";
+import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
 import { notice } from "../../../ui/local-ui/7-toaster";
 
 export function TopMenu() {
@@ -14,6 +14,7 @@ export function TopMenu() {
     const setEditFiltersOpen = useSetAtom(dialogEditFiltersOpenAtom);
     const setBlockLoadFiltersOpen = useSetAtom(dialogBlockLoadFiltersOpenAtom);
     const setEditHighlightsOpen = useSetAtom(dialogEditHighlightsOpenAtom);
+    const setCalculatorOpen = useSetAtom(dialogCalculatorOpenAtom);
 
     return (
         <Menubar className="px-2 bg-transparent border-none rounded-none shadow-none">
@@ -52,6 +53,9 @@ export function TopMenu() {
                     <MenubarItem onClick={() => setBlockLoadFiltersOpen(true)}>
                         Blocked files...
                         <MenubarShortcut>Alt+B</MenubarShortcut>
+                    </MenubarItem>
+                    <MenubarItem onClick={() => setCalculatorOpen(true)}>
+                        Calculator...
                     </MenubarItem>
                     <MenubarItem onClick={() => setOptionsOpen(true)}>
                         Options...
