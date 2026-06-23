@@ -1,82 +1,50 @@
 /**
- * Format an error line content by converting hResult patterns to hex values.
+ * Format an error line content by converting hResult patterns and negative error codes to hex values.
  * @param content - The content to format.
  * @returns The formatted content.
  * @example
  * formatErrorLineContent("hResult=2147500037") // "hResult: 0x80004005"
- * formatErrorLineContent("hResult: 2147500037") // "hResult: 0x80004005"
- * formatErrorLineContent("hResult 2147500037") // "hResult 0x80004005"
- * formatErrorLineContent("hResult: -2147500037") // "hResult: 0x80004005"
- * formatErrorLineContent("-2147024894 ") // "0x80070002 (-2147024894)"
- * formatErrorLineContent("-2147024894 DPFPTokenIsEnrolled failed") // "0x80070002 (-2147024894): DPFPTokenIsEnrolled failed"
- * formatErrorLineContent("0x80004003") // "0x80004003 (-2147467261)"
+ * formatErrorLineContent("hResult: -2147500037") // "hResult: 0x80004005 (-2147500037)"
+ * formatErrorLineContent("-2147024894 DPFPTokenIsEnrolled failed") // "0x80070002 (-2147024894) DPFPTokenIsEnrolled failed"
+ * formatErrorLineContent("m_cpWrappedProvider->Advise -2147467263") // "m_cpWrappedProvider->Advise 0x80004001 (-2147467263)"
  */
 export function formatErrorLineContent(content: string): string {
 
     // Try to find hResult pattern (e.g. hResult=2147500037, hResult: 2147500037, hResult 2147500037) and convert to hex
     // -2147500037 -> 0x80004005 (E_FAIL)
     // '-2147024894 ' -> 0x80070002 (E_FILE_NOT_FOUND) // Windows cannot find a specified file
-    let result = content.replace(/hResult([:=\s]+)(-?\d+)/g, (match, separator, p1) => {
+    let result = content.replace(/hResult([:=\s]+)(-?\d+)/g, (match, separator, decimalString) => {
         try {
-            const dec = parseInt(p1, 10);
-            // Handle signed integer to unsigned hex conversion
-            const hex = unsignedHexFromSignedDecimal(dec);
-            // Preserve the separator (:, =, or space) in the output, normalize whitespace to single space
+            const dec = parseInt(decimalString, 10);
             const normalizedSeparator = separator.includes(':') ? ': ' : separator.includes('=') ? '=' : ' ';
-            return `hResult${normalizedSeparator}0x${hex}`;
+            const formattedCode = dec < 0 ? formatNegativeErrorCode(dec) : `0x${unsignedHexFromSignedDecimal(dec)}`;
+            return `hResult${normalizedSeparator}${formattedCode}`;
         } catch {
             return match;
         }
     });
 
-    if (result === content) {
-        const formatted = formatLeadingErrorCode(content);
-        if (formatted !== undefined) {
-            return formatted;
+    result = result.replace(/(?<![\d(])-(\d+)(?![\d.])/g, (match) => {
+        try {
+            const dec = parseInt(match, 10);
+            return formatNegativeErrorCode(dec);
+        } catch {
+            return match;
         }
-    }
+    });
 
     return result;
 }
 
 export const NOISE_ERROR_CODE = "0x80070002";
 
-function formatLeadingErrorCode(content: string): string | undefined {
-    const hexMatch = content.match(/^\s*(0x[0-9A-Fa-f]+)\s*(.*)$/);
-    if (hexMatch) {
-        const hex = hexMatch[1].slice(2);
-        const dec = signedDecimalFromHex(hexMatch[1]);
-        return formatErrorCodeLine(hex, dec, hexMatch[2]);
-    }
-
-    const decMatch = content.match(/^\s*(-?\d+)\s*(.*)$/);
-    if (decMatch) {
-        const dec = parseInt(decMatch[1], 10);
-        const hex = unsignedHexFromSignedDecimal(dec);
-        return formatErrorCodeLine(hex, toSignedInt32(dec), decMatch[2]);
-    }
-
-    return undefined;
-}
-
-function formatErrorCodeLine(hex: string, dec: number, message: string): string {
-    const errorCode = `0x${hex.toUpperCase()}`;
-    const base = `${errorCode} (${dec})`;
-    const trimmedMessage = message.trim();
-    return trimmedMessage ? `${base}: ${trimmedMessage}` : base;
+function formatNegativeErrorCode(dec: number): string {
+    const hex = unsignedHexFromSignedDecimal(dec);
+    return `0x${hex} (${dec})`;
 }
 
 function unsignedHexFromSignedDecimal(dec: number): string {
     return (dec >>> 0).toString(16).toUpperCase();
-}
-
-function signedDecimalFromHex(hexValue: string): number {
-    const unsigned = parseInt(hexValue, 16);
-    return toSignedInt32(unsigned);
-}
-
-function toSignedInt32(value: number): number {
-    return value | 0;
 }
 
 /*
