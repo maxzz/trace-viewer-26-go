@@ -7,7 +7,9 @@
  * formatErrorLineContent("hResult: 2147500037") // "hResult: 0x80004005"
  * formatErrorLineContent("hResult 2147500037") // "hResult 0x80004005"
  * formatErrorLineContent("hResult: -2147500037") // "hResult: 0x80004005"
- * formatErrorLineContent("-2147024894 ") // "0x80070002"
+ * formatErrorLineContent("-2147024894 ") // "0x80070002 (-2147024894)"
+ * formatErrorLineContent("-2147024894 DPFPTokenIsEnrolled failed") // "0x80070002 (-2147024894): DPFPTokenIsEnrolled failed"
+ * formatErrorLineContent("0x80004003") // "0x80004003 (-2147467261)"
  */
 export function formatErrorLineContent(content: string): string {
 
@@ -18,7 +20,7 @@ export function formatErrorLineContent(content: string): string {
         try {
             const dec = parseInt(p1, 10);
             // Handle signed integer to unsigned hex conversion
-            const hex = (dec >>> 0).toString(16).toUpperCase();
+            const hex = unsignedHexFromSignedDecimal(dec);
             // Preserve the separator (:, =, or space) in the output, normalize whitespace to single space
             const normalizedSeparator = separator.includes(':') ? ': ' : separator.includes('=') ? '=' : ' ';
             return `hResult${normalizedSeparator}0x${hex}`;
@@ -27,17 +29,10 @@ export function formatErrorLineContent(content: string): string {
         }
     });
 
-    // If no hResult pattern was found, check if the line contains only a single integer
     if (result === content) {
-        // Check if the entire line is just a single integer (possibly with leading/trailing whitespace)
-        const singleIntMatch = content.match(/^\s*(-?\d+)\s*$/);
-        if (singleIntMatch) {
-            try {
-                const errorCode = decimalToErrorCode(singleIntMatch[1]);
-                return errorCode === NOISE_ERROR_CODE ? NOISE_ERROR_CODE : errorCode;
-            } catch {
-                // If conversion fails, return original
-            }
+        const formatted = formatLeadingErrorCode(content);
+        if (formatted !== undefined) {
+            return formatted;
         }
     }
 
@@ -46,18 +41,43 @@ export function formatErrorLineContent(content: string): string {
 
 export const NOISE_ERROR_CODE = "0x80070002";
 
-function decimalToErrorCode(decimalString: string): string {
-    const dec = parseInt(decimalString, 10);
-    const hex = (dec >>> 0).toString(16).toUpperCase();
-    return `0x${hex}`;
+function formatLeadingErrorCode(content: string): string | undefined {
+    const hexMatch = content.match(/^\s*(0x[0-9A-Fa-f]+)\s*(.*)$/);
+    if (hexMatch) {
+        const hex = hexMatch[1].slice(2);
+        const dec = signedDecimalFromHex(hexMatch[1]);
+        return formatErrorCodeLine(hex, dec, hexMatch[2]);
+    }
+
+    const decMatch = content.match(/^\s*(-?\d+)\s*(.*)$/);
+    if (decMatch) {
+        const dec = parseInt(decMatch[1], 10);
+        const hex = unsignedHexFromSignedDecimal(dec);
+        return formatErrorCodeLine(hex, toSignedInt32(dec), decMatch[2]);
+    }
+
+    return undefined;
 }
 
-// -2147024894 DPFPTokenIsEnrolled failed
-// -2147024893 DpAgent64::InstallFirefoxCertificate::
-// -2147467263 m_cpWrappedProvider->Advise
-// -2147023673 httpcall[com]
-// -2147023673 hr
-// 0x80004003
+function formatErrorCodeLine(hex: string, dec: number, message: string): string {
+    const errorCode = `0x${hex.toUpperCase()}`;
+    const base = `${errorCode} (${dec})`;
+    const trimmedMessage = message.trim();
+    return trimmedMessage ? `${base}: ${trimmedMessage}` : base;
+}
+
+function unsignedHexFromSignedDecimal(dec: number): string {
+    return (dec >>> 0).toString(16).toUpperCase();
+}
+
+function signedDecimalFromHex(hexValue: string): number {
+    const unsigned = parseInt(hexValue, 16);
+    return toSignedInt32(unsigned);
+}
+
+function toSignedInt32(value: number): number {
+    return value | 0;
+}
 
 /*
 TODO: collect all error codes and add to a map, so we can use it to format the error line content.
