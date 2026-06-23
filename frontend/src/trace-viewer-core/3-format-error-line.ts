@@ -48,12 +48,16 @@ export function errorHexToSignedDecimal(hexValue: string): number | undefined {
         return undefined;
     }
 
-    const match = trimmed.match(/^0x([0-9A-Fa-f]+)$/i);
-    if (!match) {
+    let hexDigits = trimmed;
+    if (hexDigits.startsWith("0x") || hexDigits.startsWith("0X")) {
+        hexDigits = hexDigits.slice(2);
+    }
+
+    if (!hexDigits || !/^[0-9A-Fa-f]+$/.test(hexDigits)) {
         return undefined;
     }
 
-    const unsigned = parseInt(match[1], 16);
+    const unsigned = parseInt(hexDigits, 16);
     if (!Number.isFinite(unsigned)) {
         return undefined;
     }
