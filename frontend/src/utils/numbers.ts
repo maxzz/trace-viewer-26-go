@@ -6,6 +6,24 @@ export function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(value, min), max);
 }
 
+export function formatBytes(bytes: number, digits: number = 1): string {
+    const value = Math.max(0, Math.round(bytes));
+    if (value < 1024) {
+        return `${value} B`;
+    }
+
+    const units = ["KB", "MB", "GB", "TB"];
+    let size = value / 1024;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+        size /= 1024;
+        unitIndex++;
+    }
+
+    const rounded = size >= 100 ? Math.round(size) : Number(size.toFixed(digits));
+    return `${rounded} ${units[unitIndex]}`;
+}
+
 export const toNumberWDefault1 = (string: string) => { //mostly for plural and pluralWord
     let n = parseInt(string);
     if (Number.isNaN(n)) {

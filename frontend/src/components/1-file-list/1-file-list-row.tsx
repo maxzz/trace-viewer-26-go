@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import { type Atom, useAtomValue, useSetAtom } from "jotai";
 import { selectAtom } from "jotai/utils";
 import { useSnapshot, type Snapshot } from "valtio";
-import { cn } from "@/utils/index";
+import { cn, formatBytes } from "@/utils/index";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger, } from "../ui/shadcn/context-menu";
 import { appSettings, type HighlightRule } from "@/store/1-ui-settings";
 import { AlertCircle, FileText } from "lucide-react";
@@ -10,6 +10,7 @@ import { SymbolQuestion, SymbolWarning } from "@/components/ui/icons";
 import { SymbolArrowCircleLeft } from "../ui/icons/symbols/all-other/33-arrow-circle-left";
 import { SymbolSpinner } from "../ui/icons/symbols";
 import { type FileState } from "@/store/traces-store/9-types-files-store";
+import { asyncReloadFileById } from "@/store/traces-store/8-1-load-files";
 import { selectFile, closeFile, closeOtherFiles, closeAllFiles } from "@/store/traces-store/0-2-files-actions";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
 import { dialogFileHeaderOpenAtom, dialogEditHighlightsOpenAtom } from "@/store/2-ui-atoms";
@@ -39,6 +40,9 @@ export const FileListRow = memo(
         const overlayClasses = getOverlayClasses(highlightEnabled, highlightRules, fileState.matchedHighlightIds);
         const showInlineUpdateFailure = !fileUpdates.showFailureNotice && fileState.updateInfo.status === "failed";
         const showSizeChangeWarning = fileUpdates.sizeMonitorEnabled && fileState.updateInfo.hasUnreloadedSizeChange;
+        const { totalAddedBytes, recentAddedBytes } = fileState.updateInfo;
+        const showByteCounters = fileUpdates.sizeMonitorEnabled && (totalAddedBytes > 0 || recentAddedBytes > 0);
+        const canReload = fileState.source.kind === "handle";
 
         const isMarked = allTimesSelectedTimestamp
             ? allTimes.find((t) => t.timestamp === allTimesSelectedTimestamp)?.fileIds.includes(fileState.id)
@@ -77,6 +81,21 @@ export const FileListRow = memo(
                             {fileState.data.fileName}
                         </span>
 
+                        {showByteCounters && (
+                            <span className="ml-auto shrink-0 gap-1 font-mono text-[0.65rem] z-10 flex items-center">
+                                {recentAddedBytes > 0 && (
+                                    <span className="text-orange-500" title={`+${recentAddedBytes.toLocaleString()} bytes in the last check`}>
+                                        +{formatBytes(recentAddedBytes)}
+                                    </span>
+                                )}
+                                {totalAddedBytes > 0 && (
+                                    <span className="text-muted-foreground/60" title={`${totalAddedBytes.toLocaleString()} bytes added since the file was opened`}>
+                                        {formatBytes(totalAddedBytes)}
+                                    </span>
+                                )}
+                            </span>
+                        )}
+
                         {showSizeChangeWarning && (
                             <SymbolWarning
                                 className="shrink-0 size-3.5 text-amber-500 z-10"
@@ -112,6 +131,10 @@ export const FileListRow = memo(
                 </ContextMenuTrigger>
 
                 <ContextMenuContent>
+                    <ContextMenuItem disabled={!canReload} onClick={() => void asyncReloadFileById(fileState.id)}>
+                        Reload
+                    </ContextMenuItem>
+                    <ContextMenuSeparator />
                     <ContextMenuItem onClick={() => { navigator.clipboard.writeText(fileState.data.fileName); }}>
                         Copy File Name
                     </ContextMenuItem>

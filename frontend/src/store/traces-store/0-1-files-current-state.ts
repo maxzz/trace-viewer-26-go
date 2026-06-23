@@ -13,6 +13,12 @@ export function getCurrentFileState(): FileState | null {
 export function setCurrentFileState(fileState: FileState | null, forceUpdate = false): void {
     const store = getDefaultStore();
 
+    // Selection changed to a different file: hide the green new-lines marker on the file we leave.
+    const previous = store.get(currentFileStateAtom);
+    if (previous && previous.id !== (fileState?.id ?? null)) {
+        store.set(previous.newLinesMarkerAtom, null);
+    }
+
     if (forceUpdate && fileState) {
         // Create a shallow copy to force Jotai to notify subscribers (same data, new reference)
         store.set(currentFileStateAtom, { ...fileState });

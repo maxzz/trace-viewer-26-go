@@ -1,10 +1,11 @@
 import React, { useMemo } from "react";
 import { useAtomValue } from "jotai";
 import { selectAtom } from "jotai/utils";
-import type { PrimitiveAtom } from "jotai";
+import type { Atom, PrimitiveAtom } from "jotai";
 import { classNames } from "@/utils";
 import { type TraceLine, LineCode } from "../../trace-viewer-core/9-core-types";
 import { setCurrentLineIndex } from "../../store/traces-store/0-1-files-current-state";
+import { type NewLinesMarker } from "@/store/traces-store/9-types-files-store";
 import { ITEM_HEIGHT } from "./9-trace-view-constants";
 import { columnLineNumberClasses, columnTimeClasses, columnThreadIdClasses, lineClasses, lineCurrentClasses, lineNotCurrentClasses, lineErrorClasses } from "./8-trace-view-classes";
 
@@ -14,24 +15,32 @@ type TraceRowParams = {
     line: TraceLine;
     baseIndex: number;
     currentLineIdxAtom: PrimitiveAtom<number>;
+    newLinesMarkerAtom: Atom<NewLinesMarker | null>;
     useIconsForEntryExit: boolean;
     showLineNumbers: boolean;
     uniqueThreadIds: readonly number[];
     firstLineLength: number;
-    isNewlyAppended: boolean;
     isErrorsOnlyActive: boolean;
     onErrorJump: (baseIndex: number, line: TraceLine) => void;
 };
 
-function TraceRow({ line, baseIndex, currentLineIdxAtom, useIconsForEntryExit, showLineNumbers, uniqueThreadIds, firstLineLength, isNewlyAppended, isErrorsOnlyActive, onErrorJump }: TraceRowParams) {
+function TraceRow({ line, baseIndex, currentLineIdxAtom, newLinesMarkerAtom, useIconsForEntryExit, showLineNumbers, uniqueThreadIds, firstLineLength, isErrorsOnlyActive, onErrorJump }: TraceRowParams) {
     const isSelectedAtom = useMemo(() => selectAtom(currentLineIdxAtom, (s) => s === baseIndex), [currentLineIdxAtom, baseIndex]);
     const isSelected = useAtomValue(isSelectedAtom);
+
+    // Only the appended rows re-subscribe to a `true` value, so toggling the marker never re-renders the whole list.
+    const isNewlyAppendedAtom = useMemo(
+        () => selectAtom(newLinesMarkerAtom, (marker) => isLineNewlyAppended(marker, line.lineIndex)),
+        [newLinesMarkerAtom, line.lineIndex]
+    );
+    const isNewlyAppended = useAtomValue(isNewlyAppendedAtom);
+
     const showThreadBackground = uniqueThreadIds.length > 0 && uniqueThreadIds[0] !== line.threadId;
 
     return (
         <div className={classNames(getRowClasses(line, isSelected), "group/trace-row relative")} style={{ height: ITEM_HEIGHT }} onClick={() => setCurrentLineIndex(baseIndex)}>
             {isNewlyAppended && (
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-green-500/80 pointer-events-none" />
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-green-500 pointer-events-none" />
             )}
 
             {/* Time Column */}
@@ -145,4 +154,8 @@ function getLineColor(line: TraceLine) {
 function getThreadColor(tid: number, alpha = 1) {
     const hue = (Math.abs(tid) * 137.508) % 360;
     return `hsla(${hue}, 75%, 50%, ${alpha})`;
+}
+
+function isLineNewlyAppended(marker: NewLinesMarker | null, lineIndex: number): boolean {
+    return !!marker && lineIndex >= marker.fromLineIndex;
 }

@@ -4,7 +4,7 @@ import { ref } from "valtio";
 import { extractTracesFromZipInWorker, isTrc3File, isZipFile } from "@/workers-client";
 import { setAppTitle } from "@/store/3-ui-app-title";
 import { notice } from "@/components/ui/local-ui/7-toaster";
-import { filesStore, type FileData, type FileSourceInfo, type FileState } from "./9-types-files-store";
+import { filesStore, type FileData, type FileSourceInfo, type FileState, type FileUpdateInfo, type NewLinesMarker } from "./9-types-files-store";
 import { asyncParseTraceFile, type ParsedTraceData } from "./8-2-parse-trace-file";
 import { emptyFileHeader, LineCode, type TraceLine } from "@/trace-viewer-core/9-core-types";
 import { NOISE_ERROR_CODE } from "@/trace-viewer-core/3-format-error-line";
@@ -17,13 +17,14 @@ import { setFileLoading } from "./8-3-file-loading-atoms";
 import { recomputeHighlightMatches } from "../5-highlight-rules";
 import { allTimesStore } from "./3-1-all-times-store";
 import { selectFile } from "./0-2-files-actions";
-import { getCurrentFileState, setCurrentFileState } from "./0-1-files-current-state";
+import { getCurrentFileState, setCurrentFileState, setCurrentLineIndex } from "./0-1-files-current-state";
 import { getActiveBlockLoadPatterns, shouldBlockFileLoad } from "../9-block-load-filters";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
+import { isTraceViewAtEnd, requestScrollTraceViewToBottom } from "./8-5-tail-tracking";
 
 export const isLoadingFilesAtom = atom(false);
 
-const NEW_LINES_MARKER_DURATION_MS = 1000;
+const RECENT_ADDED_BYTES_DURATION_MS = 1000;
 const FILE_RELOAD_RETRY_ATTEMPTS = 4;
 const FILE_RELOAD_RETRY_DELAY_MS = 500;
 
@@ -200,7 +201,7 @@ function newTraceItemCreate(file: File, source: FileSourceInfo): FileState {
             id,
             data, // Placeholder, will update after adding to store
             source: ref(source),
-            newLinesMarker: null,
+            newLinesMarkerAtom: atom<NewLinesMarker | null>(null),
             updateInfo: {
                 status: "idle",
                 lastLoadedSize: file.size,
@@ -210,6 +211,9 @@ function newTraceItemCreate(file: File, source: FileSourceInfo): FileState {
                 lastSuccessAt: null,
                 lastFailureAt: null,
                 failureMessage: null,
+                totalAddedBytes: 0,
+                recentAddedBytes: 0,
+                recentAddedExpiresAt: null,
             },
             currentLineIdxAtom: atom(-1),
             scrollTopAtom: atom(0),
@@ -230,7 +234,7 @@ async function newTraceItemLoad(fileState: FileState, file: File): Promise<void>
         const parsed = await asyncParseTraceFile(file);
 
         applyParsedTraceData(fileState, file.name, parsed);
-        fileState.newLinesMarker = null;
+        clearNewLinesMarker(fileState);
         syncLoadedFileSize(fileState, file.size);
         data.isLoading = false;
     } catch (e: any) {
@@ -291,31 +295,31 @@ export async function asyncReloadFiles(fileStates: readonly FileState[], options
     return updatedFilesCount;
 }
 
-export async function asyncAutoReloadFiles(): Promise<number> {
-    const intervalMs = Math.max(FILE_RELOAD_RETRY_DELAY_MS, appSettings.fileUpdates.autoUpdateIntervalMs);
-    const minSizeDeltaBytes = Math.max(0, appSettings.fileUpdates.autoUpdateMinSizeChangeBytes);
-    const now = Date.now();
+type MonitorProbe = {
+    fileState: ReloadableFileState;
+    currentFile: File;
+    grew: boolean;
+};
+
+// Single monitor pass driven by the "Track file changes" toggle:
+//  - for every reloadable file: read its size, update the byte counters and the unreloaded-change flag;
+//  - for the currently selected file only: if it grew AND the right pane was scrolled to the very
+//    bottom, reload its content, then scroll to (and select) the freshly appended lines.
+export async function asyncMonitorTick(): Promise<void> {
+    const selectedId = getCurrentFileState()?.id ?? null;
+    const followTail = isTraceViewAtEnd();
 
     const probeResults = await Promise.all(
         filesStore.states.map(
-            async (fileState) => {
+            async (fileState): Promise<MonitorProbe | null> => {
                 if (!canReloadFile(fileState)) return null;
                 if (activeFileReloadControllers.has(fileState.id)) return null;
 
-                const lastAttemptAt = fileState.updateInfo.lastAttemptAt;
-                if (lastAttemptAt !== null && now - lastAttemptAt < intervalMs) {
-                    return null;
-                }
-
                 try {
                     const currentFile = await fileState.source.handle.getFile();
-                    updateObservedFileSize(fileState, currentFile.size, appSettings.fileUpdates.sizeMonitorEnabled);
-
-                    if (Math.abs(currentFile.size - fileState.updateInfo.lastLoadedSize) < minSizeDeltaBytes) {
-                        return null;
-                    }
-
-                    return { fileState, currentFile };
+                    const grew = currentFile.size > fileState.updateInfo.lastObservedSize;
+                    updateObservedFileSize(fileState, currentFile.size, true);
+                    return { fileState, currentFile, grew };
                 } catch {
                     return null;
                 }
@@ -323,41 +327,41 @@ export async function asyncAutoReloadFiles(): Promise<number> {
         )
     );
 
-    const prefetchedFiles = new Map<string, File>();
-    const candidates: ReloadableFileState[] = [];
-
-    for (const result of probeResults) {
-        if (!result) continue;
-        prefetchedFiles.set(result.fileState.id, result.currentFile);
-        candidates.push(result.fileState);
+    if (!followTail || !selectedId) {
+        return;
     }
 
-    if (candidates.length === 0) {
-        return 0;
+    const tailCandidate = probeResults.find((probe) => !!probe && probe.grew && probe.fileState.id === selectedId);
+    if (!tailCandidate) {
+        return;
     }
 
-    return asyncReloadFiles(candidates, { reason: "auto", prefetchedFiles });
+    const prefetchedFiles = new Map<string, File>([[tailCandidate.fileState.id, tailCandidate.currentFile]]);
+    const updatedCount = await asyncReloadFiles([tailCandidate.fileState], { reason: "auto", prefetchedFiles });
+
+    if (updatedCount > 0) {
+        followSelectedFileTail(tailCandidate.fileState);
+    }
 }
 
-export async function asyncCheckFileSizeChanges(): Promise<number> {
-    const probeResults = await Promise.all(
-        filesStore.states.map(
-            async (fileState) => {
-                if (!canReloadFile(fileState)) return false;
-                if (activeFileReloadControllers.has(fileState.id)) return false;
+export async function asyncReloadFileById(fileId: string): Promise<void> {
+    const fileState = filesStore.states.find((item) => item.id === fileId);
+    if (canReloadFile(fileState)) {
+        await asyncReloadFile(fileState);
+    }
+}
 
-                try {
-                    const currentFile = await fileState.source.handle.getFile();
-                    updateObservedFileSize(fileState, currentFile.size, true);
-                    return fileState.updateInfo.hasUnreloadedSizeChange;
-                } catch {
-                    return false;
-                }
-            }
-        )
-    );
+function followSelectedFileTail(fileState: FileState) {
+    if (getCurrentFileState()?.id !== fileState.id) {
+        return;
+    }
 
-    return probeResults.filter(Boolean).length;
+    const lastLineIndex = fileState.data.viewLines.length - 1;
+    if (lastLineIndex >= 0) {
+        setCurrentLineIndex(lastLineIndex);
+    }
+
+    requestScrollTraceViewToBottom();
 }
 
 export function cancelFileReload(fileId: string) {
@@ -410,16 +414,22 @@ function clampCurrentLineIndex(fileState: FileState, viewLinesLength: number) {
     store.set(fileState.currentLineIdxAtom, maxLineIndex >= 0 ? Math.min(currentLineIndex, maxLineIndex) : -1);
 }
 
-function createNewLinesMarker(previousRawLineCount: number, nextRawLineCount: number) {
+function createNewLinesMarker(previousRawLineCount: number, nextRawLineCount: number): NewLinesMarker | null {
     if (nextRawLineCount <= previousRawLineCount) {
         return null;
     }
 
     return {
         fromLineIndex: previousRawLineCount,
-        expiresAt: Date.now() + NEW_LINES_MARKER_DURATION_MS,
-        token: Date.now(),
     };
+}
+
+function setNewLinesMarker(fileState: FileState, marker: NewLinesMarker | null) {
+    getDefaultStore().set(fileState.newLinesMarkerAtom, marker);
+}
+
+function clearNewLinesMarker(fileState: FileState) {
+    getDefaultStore().set(fileState.newLinesMarkerAtom, null);
 }
 
 function createFileSourceInfo(file: File): FileSourceInfo {
@@ -463,7 +473,7 @@ async function reloadSingleFile(fileState: ReloadableFileState, options: ReloadS
         applyParsedTraceData(fileState, file.name, parsed);
         resetThreadViewCache(fileState);
         clampCurrentLineIndex(fileState, parsed.viewLines.length);
-        fileState.newLinesMarker = createNewLinesMarker(previousRawLineCount, parsed.rawLines.length);
+        setNewLinesMarker(fileState, createNewLinesMarker(previousRawLineCount, parsed.rawLines.length));
         markUpdateSucceeded(fileState, file.size);
         refreshCurrentFileStateIfSelected(fileState);
         return "success";
@@ -486,7 +496,7 @@ async function reloadSingleFile(fileState: ReloadableFileState, options: ReloadS
 }
 
 function startFileUpdate(fileState: FileState) {
-    fileState.newLinesMarker = null;
+    clearNewLinesMarker(fileState);
     fileState.updateInfo.status = "updating";
     fileState.updateInfo.lastAttemptAt = Date.now();
     fileState.updateInfo.failureMessage = null;
@@ -501,19 +511,67 @@ function syncLoadedFileSize(fileState: FileState, fileSize: number) {
 }
 
 function updateObservedFileSize(fileState: FileState, fileSize: number, trackSizeChange: boolean) {
-    const previousSizeChanged = fileState.updateInfo.hasUnreloadedSizeChange;
+    const info = fileState.updateInfo;
+    const previousSizeChanged = info.hasUnreloadedSizeChange;
+    const addedBytes = fileSize - info.lastObservedSize;
 
-    fileState.updateInfo.lastObservedSize = fileSize;
+    info.lastObservedSize = fileSize;
 
     if (!trackSizeChange) {
         return;
     }
 
-    fileState.updateInfo.hasUnreloadedSizeChange = fileSize !== fileState.updateInfo.lastLoadedSize;
+    if (addedBytes > 0) {
+        applyAddedBytes(fileState, addedBytes);
+    }
 
-    if (previousSizeChanged !== fileState.updateInfo.hasUnreloadedSizeChange) {
+    info.hasUnreloadedSizeChange = fileSize !== info.lastLoadedSize;
+
+    if (previousSizeChanged !== info.hasUnreloadedSizeChange) {
         refreshCurrentFileStateIfSelected(fileState);
     }
+}
+
+// Byte growth counters: show the most recent delta in orange for ~1s, then fold it into the gray total.
+const recentBytesCommitTimers = new Map<string, number>();
+
+function applyAddedBytes(fileState: FileState, addedBytes: number) {
+    const info = fileState.updateInfo;
+
+    // A newer delta arrived: commit the previous (still-orange) delta into the total first.
+    commitPendingRecentBytes(info);
+
+    info.recentAddedBytes = addedBytes;
+    info.recentAddedExpiresAt = Date.now() + RECENT_ADDED_BYTES_DURATION_MS;
+    scheduleRecentBytesCommit(fileState);
+
+    // A fresh size change hides the previous green marker (re-set later if the file is reloaded).
+    clearNewLinesMarker(fileState);
+}
+
+function commitPendingRecentBytes(info: FileUpdateInfo) {
+    if (info.recentAddedBytes > 0) {
+        info.totalAddedBytes += info.recentAddedBytes;
+        info.recentAddedBytes = 0;
+    }
+    info.recentAddedExpiresAt = null;
+}
+
+function scheduleRecentBytesCommit(fileState: FileState) {
+    const existing = recentBytesCommitTimers.get(fileState.id);
+    if (existing !== undefined) {
+        window.clearTimeout(existing);
+    }
+
+    const timerId = window.setTimeout(
+        () => {
+            recentBytesCommitTimers.delete(fileState.id);
+            commitPendingRecentBytes(fileState.updateInfo);
+        },
+        RECENT_ADDED_BYTES_DURATION_MS
+    );
+
+    recentBytesCommitTimers.set(fileState.id, timerId);
 }
 
 function markUpdateSucceeded(fileState: FileState, fileSize: number) {

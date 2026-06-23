@@ -8,6 +8,7 @@ import { currentFileThreadFilterViewStateAtom } from "@/store/traces-store/0-4-t
 import { type TraceLine } from "@/trace-viewer-core/9-core-types";
 import { ITEM_HEIGHT } from "./9-trace-view-constants";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
+import { scrollToBottomNonceAtom, traceViewAtEndAtom } from "@/store/traces-store/8-5-tail-tracking";
 import { TraceRowMemo } from "./1-trace-view-row";
 import { handlePendingTimestampScroll, scrollToSelection } from "./2-trace-view-scroll";
 import { handleKeyboardNavigation } from "./3-trace-view-keyboard";
@@ -36,13 +37,21 @@ export function TraceList({ currentFileState }: { currentFileState: FileState; }
     const [scrollTop, setScrollTop] = useAtom(scrollTopAtom);
     const [containerHeight, setContainerHeight] = useState(800); // Default
     const [hoveredTimestamp, setHoveredTimestamp] = useAtom(hoveredTimestampAtom);
-    const [, setNewLinesMarkerTick] = useState(0);
-    const activeNewLinesMarker = currentFileState.newLinesMarker && currentFileState.newLinesMarker.expiresAt > Date.now()
-        ? currentFileState.newLinesMarker
-        : null;
+    const setTraceViewAtEnd = useSetAtom(traceViewAtEndAtom);
+    const scrollToBottomNonce = useAtomValue(scrollToBottomNonceAtom);
+    const newLinesMarkerAtom = currentFileState.newLinesMarkerAtom;
 
     const { isErrorsOnlyActive, linesForView, threadIdsForView, displayIndexToBaseIndex, baseIndexToDisplayIndex } = useAtomValue(currentFileThreadFilterViewStateAtom);
     const onErrorJump = useSetAtom(jumpFromErrorsOnlyToContextAtom);
+
+    const updateTraceViewAtEnd = useCallback(
+        () => {
+            const el = scrollRef.current;
+            if (!el) return;
+            const distanceFromBottom = el.scrollHeight - (el.scrollTop + el.clientHeight);
+            setTraceViewAtEnd(distanceFromBottom <= ITEM_HEIGHT * 2);
+        },
+        [setTraceViewAtEnd]);
 
     const onMouseMove = useCallback(
         (e: React.MouseEvent<HTMLDivElement>) => {
@@ -130,30 +139,34 @@ export function TraceList({ currentFileState }: { currentFileState: FileState; }
         },
         [pendingScrollTimestamp, pendingScrollFileId, viewLines, containerHeight, selectedFileId, baseIndexToDisplayIndex]);
 
-    useEffect( // Refresh after transient new-lines marker expires
+    useEffect( // Re-evaluate "scrolled to the very bottom" when the file, content height or viewport changes
         () => {
-            if (!activeNewLinesMarker) return;
-
-            const remainingMs = activeNewLinesMarker.expiresAt - Date.now();
-            if (remainingMs <= 0) {
-                setNewLinesMarkerTick((value) => value + 1);
-                return;
-            }
-
-            const timeoutId = window.setTimeout(
-                () => setNewLinesMarkerTick((value) => value + 1),
-                remainingMs
-            );
-
-            return () => window.clearTimeout(timeoutId);
+            updateTraceViewAtEnd();
         },
-        [selectedFileId, activeNewLinesMarker?.token, activeNewLinesMarker?.expiresAt]);
+        [selectedFileId, containerHeight, linesForView.length, updateTraceViewAtEnd]);
+
+    useEffect( // Monitor asked to follow the tail: scroll to the bottom after the new lines render
+        () => {
+            if (scrollToBottomNonce === 0) return;
+
+            const frameId = window.requestAnimationFrame(() => {
+                const el = scrollRef.current;
+                if (!el) return;
+                el.scrollTop = el.scrollHeight;
+                setScrollTop(el.scrollHeight);
+                setTraceViewAtEnd(true);
+            });
+
+            return () => window.cancelAnimationFrame(frameId);
+        },
+        [scrollToBottomNonce, setScrollTop, setTraceViewAtEnd]);
 
     const onScroll = useCallback(
         (e: React.UIEvent<HTMLDivElement>) => {
             setScrollTop(e.currentTarget.scrollTop);
+            updateTraceViewAtEnd();
         },
-        [setScrollTop]);
+        [setScrollTop, updateTraceViewAtEnd]);
 
     const { totalHeight, visibleLines, offsetY, startIndex, firstLineLength } = calculateVirtualization(linesForView, containerHeight, scrollTop);
 
@@ -204,11 +217,11 @@ export function TraceList({ currentFileState }: { currentFileState: FileState; }
                                 line={line}
                                 baseIndex={getBaseIndexForDisplayIndex(displayIndexToBaseIndex, startIndex + idx)}
                                 currentLineIdxAtom={currentLineIdxAtom}
+                                newLinesMarkerAtom={newLinesMarkerAtom}
                                 useIconsForEntryExit={useIconsForEntryExit}
                                 showLineNumbers={showLineNumbers}
                                 uniqueThreadIds={threadIdsForView}
                                 firstLineLength={firstLineLength}
-                                isNewlyAppended={!!activeNewLinesMarker && line.lineIndex >= activeNewLinesMarker.fromLineIndex}
                                 isErrorsOnlyActive={isErrorsOnlyActive}
                                 onErrorJump={(baseIndex, line) => onErrorJump({ baseIndex, lineThreadId: line.threadId })}
                             />

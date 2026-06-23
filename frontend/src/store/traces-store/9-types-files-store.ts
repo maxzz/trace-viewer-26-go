@@ -6,10 +6,10 @@ export type FileSourceInfo =
     | { kind: "zip"; zipFileName: string; }
     | { kind: "transient"; };
 
-export interface FileNewLinesMarker {
-    fromLineIndex: number;
-    expiresAt: number;
-    token: number;
+// Marker that highlights freshly appended lines (green 2px left bar).
+// Kept intentionally small/extensible so the show/hide conditions can grow later.
+export interface NewLinesMarker {
+    fromLineIndex: number;          // first appended line (in TraceLine.lineIndex space).
 }
 
 export interface FileUpdateInfo {
@@ -21,6 +21,11 @@ export interface FileUpdateInfo {
     lastSuccessAt: number | null;
     lastFailureAt: number | null;
     failureMessage: string | null;
+
+    // Byte growth counters (since the file was first opened).
+    totalAddedBytes: number;        // committed total, shown in gray.
+    recentAddedBytes: number;       // most recent check delta, shown in orange for ~1s.
+    recentAddedExpiresAt: number | null; // when the orange delta folds into totalAddedBytes.
 }
 
 export interface FileData  {
@@ -42,7 +47,7 @@ export interface FileState {
     id: string;
     data: FileData;
     source: FileSourceInfo;
-    newLinesMarker: FileNewLinesMarker | null;
+    newLinesMarkerAtom: PA<NewLinesMarker | null>; // green new-lines marker (jotai: per-line subscribers, no full re-render).
     updateInfo: FileUpdateInfo;
     
     currentLineIdxAtom: PA<number>;             // current line index in the trace file. -1 if no line is selected.
