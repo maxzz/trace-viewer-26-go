@@ -1,5 +1,5 @@
 import { TopMenu } from "./1-all-menu";
-import { FileReloadControls } from "./2-reload-controls";
+import { MonitorControls } from "./2-monitor-controls";
 import { HistoryButtons } from "../2-right-toolbar/1-btn-nav-history";
 import { ErrorsNavControls } from "../2-right-toolbar/2-btn-nav-errors";
 import { ToggleErrorsOnly, ToggleErrorsWithoutNoise, ToggleThreadOnly } from "../2-right-toolbar/3-top-menu-toggles";
@@ -14,7 +14,7 @@ export function HeaderRow() {
 
             <div className="flex-1 px-2 items-center gap-4 flex">
                 <TopMenu />
-                <FileReloadControls />
+                <MonitorControls />
                 <LoadingProgress />
             </div>
 

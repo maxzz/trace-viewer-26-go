@@ -6,7 +6,7 @@ import { appSettings } from "@/store/1-ui-settings";
 import { filesStore } from "@/store/traces-store/9-types-files-store";
 import { asyncMonitorTick } from "@/store/traces-store/8-1-load-files";
 
-export function FileReloadControls() {
+export function MonitorControls() {
     const { states } = useSnapshot(filesStore);
     const { fileUpdates } = useSnapshot(appSettings);
     const tickRunningRef = useRef(false);
