@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	windowBoundsSaveDelay      = 5 * time.Second
-	windowBoundsPollInterval   = 250 * time.Millisecond
+	windowBoundsSaveDelay    = 5 * time.Second
+	windowBoundsPollInterval = 250 * time.Millisecond
 )
 
 func (a *App) startWindowBoundsWatcher(watchCtx context.Context) {
