@@ -66,6 +66,7 @@ export function TopMenu() {
                     <MenuItemShowFileHeader />
                     <MenubarItem onClick={() => setCalculatorOpen(true)}>
                         Errors lookup...
+                        <MenubarShortcut>Alt+E</MenubarShortcut>
                     </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
