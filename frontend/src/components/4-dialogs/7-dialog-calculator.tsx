@@ -1,5 +1,5 @@
-import { useState, type ChangeEvent } from "react";
-import { useAtom } from "jotai";
+import { type ChangeEvent } from "react";
+import { atom, useAtom } from "jotai";
 import { dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
 import { errorHexToSignedDecimal, parseSignedDecimalInput, signedDecimalToErrorHex } from "@/trace-viewer-core/3-format-error-line";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/shadcn/dialog";
@@ -9,8 +9,8 @@ import { Label } from "@/components/ui/shadcn/label";
 
 export function DialogCalculator() {
     const [open, onOpenChange] = useAtom(dialogCalculatorOpenAtom);
-    const [hexValue, setHexValue] = useState("");
-    const [decimalValue, setDecimalValue] = useState("");
+    const [hexValue, setHexValue] = useAtom(calculatorHexValueAtom);
+    const [decimalValue, setDecimalValue] = useAtom(calculatorDecimalValueAtom);
 
     function handleOpenChange(nextOpen: boolean) {
         if (!nextOpen) {
@@ -49,28 +49,14 @@ export function DialogCalculator() {
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-110!" aria-describedby={undefined}>
+            <DialogContent className="max-w-64!" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle className="text-sm">
-                        Calculator
+                        Errors Code converter
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="py-2 grid grid-cols-2 gap-4">
-                    <div className="grid gap-1">
-                        <Label htmlFor="calculator-hex">
-                            Hexadecimal
-                        </Label>
-                        <Input
-                            id="calculator-hex"
-                            className="font-mono"
-                            value={hexValue}
-                            onChange={handleHexChange}
-                            placeholder="0x80070002"
-                            spellCheck={false}
-                        />
-                    </div>
-
+                <div className="py-2 grid gap-2">
                     <div className="grid gap-1">
                         <Label htmlFor="calculator-decimal">
                             Decimal
@@ -84,6 +70,20 @@ export function DialogCalculator() {
                             spellCheck={false}
                         />
                     </div>
+
+                    <div className="grid gap-1">
+                        <Label htmlFor="calculator-hex">
+                            Hexadecimal
+                        </Label>
+                        <Input
+                            id="calculator-hex"
+                            className="font-mono"
+                            value={hexValue}
+                            onChange={handleHexChange}
+                            placeholder="0x80070002"
+                            spellCheck={false}
+                        />
+                    </div>
                 </div>
 
                 <DialogFooter>
@@ -93,3 +93,6 @@ export function DialogCalculator() {
         </Dialog>
     );
 }
+
+const calculatorHexValueAtom = atom("");
+const calculatorDecimalValueAtom = atom("");
