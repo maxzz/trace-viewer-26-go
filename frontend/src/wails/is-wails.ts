@@ -27,11 +27,6 @@ export function isBackendAvailable(): boolean {
     return Boolean((window as WailsWindow).go?.backend?.App);
 }
 
-/** @deprecated Use {@link isBackendAvailable} instead. */
-export function isWailsRuntime(): boolean {
-    return isBackendAvailable();
-}
-
 export function getBackendApp(): BackendApp | undefined {
     if (!isBackendAvailable()) {
         return undefined;
