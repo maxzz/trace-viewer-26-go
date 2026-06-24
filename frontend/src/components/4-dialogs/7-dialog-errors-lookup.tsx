@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/shadcn/input";
 import { Button } from "@/components/ui/shadcn/button";
 import { Label } from "@/components/ui/shadcn/label";
 
-export function DialogCalculator() {
+export function DialogErrorsLookup() {
     const [open, onOpenChange] = useAtom(dialogCalculatorOpenAtom);
     const [hexValue, setHexValue] = useAtom(calculatorHexValueAtom);
     const [decimalValue, setDecimalValue] = useAtom(calculatorDecimalValueAtom);
