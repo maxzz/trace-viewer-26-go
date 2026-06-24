@@ -1,3 +1,5 @@
+import { getBackendApp, isBackendAvailable } from "@/wails/is-wails";
+
 type ReadPathsResult = {
     files: { name: string; path: string; data: number[]; }[];
     droppedFolderName?: string;
@@ -5,20 +7,11 @@ type ReadPathsResult = {
 };
 
 export async function readPathsFromBackend(paths: string[]): Promise<ReadPathsResult> {
-    const readPaths = window.go.backend.App.ReadPaths as (paths: string[]) => Promise<ReadPathsResult>;
-    return readPaths(paths);
-}
-
-declare global {
-    interface Window {
-        go: {
-            backend: {
-                App: {
-                    ReadPaths: (paths: string[]) => Promise<ReadPathsResult>;
-                };
-            };
-        };
+    if (!isBackendAvailable()) {
+        throw new Error("Backend is not available.");
     }
+
+    return getBackendApp()!.ReadPaths(paths) as Promise<ReadPathsResult>;
 }
 
 export {};

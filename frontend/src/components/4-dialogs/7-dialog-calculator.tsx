@@ -1,7 +1,9 @@
-import { type ChangeEvent } from "react";
+import { useEffect, type ChangeEvent } from "react";
 import { atom, useAtom } from "jotai";
 import { dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
 import { errorHexToSignedDecimal, parseSignedDecimalInput, signedDecimalToErrorHex } from "@/trace-viewer-core/3-format-error-line";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { lookupErrorMessageFromBackend } from "@/wails/lookup-error-message";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/shadcn/dialog";
 import { Input } from "@/components/ui/shadcn/input";
 import { Button } from "@/components/ui/shadcn/button";
@@ -11,11 +13,38 @@ export function DialogCalculator() {
     const [open, onOpenChange] = useAtom(dialogCalculatorOpenAtom);
     const [hexValue, setHexValue] = useAtom(calculatorHexValueAtom);
     const [decimalValue, setDecimalValue] = useAtom(calculatorDecimalValueAtom);
+    const [errorMessage, setErrorMessage] = useAtom(calculatorErrorMessageAtom);
+    const backendAvailable = isBackendAvailable();
+
+    useEffect(() => {
+        if (!backendAvailable) {
+            setErrorMessage("");
+            return;
+        }
+
+        const code = hexValue.trim() || decimalValue.trim();
+        if (!code) {
+            setErrorMessage("");
+            return;
+        }
+
+        let cancelled = false;
+        void lookupErrorMessageFromBackend(code).then((message) => {
+            if (!cancelled) {
+                setErrorMessage(message);
+            }
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [backendAvailable, decimalValue, hexValue, setErrorMessage]);
 
     function handleOpenChange(nextOpen: boolean) {
         if (!nextOpen) {
             setHexValue("");
             setDecimalValue("");
+            setErrorMessage("");
         }
 
         onOpenChange(nextOpen);
@@ -84,6 +113,12 @@ export function DialogCalculator() {
                             spellCheck={false}
                         />
                     </div>
+
+                    {backendAvailable && errorMessage && (
+                        <p className="text-muted-foreground text-xs text-pretty">
+                            {errorMessage}
+                        </p>
+                    )}
                 </div>
 
                 <DialogFooter>
@@ -96,3 +131,4 @@ export function DialogCalculator() {
 
 const calculatorHexValueAtom = atom("");
 const calculatorDecimalValueAtom = atom("");
+const calculatorErrorMessageAtom = atom("");

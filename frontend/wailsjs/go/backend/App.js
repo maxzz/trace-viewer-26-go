@@ -6,6 +6,10 @@ export function Greet(arg1) {
   return window['go']['backend']['App']['Greet'](arg1);
 }
 
+export function LookupErrorMessage(arg1) {
+  return window['go']['backend']['App']['LookupErrorMessage'](arg1);
+}
+
 export function ReadPaths(arg1) {
   return window['go']['backend']['App']['ReadPaths'](arg1);
 }

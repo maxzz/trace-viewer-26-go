@@ -4,6 +4,8 @@ import {backend} from '../models';
 
 export function Greet(arg1:string):Promise<string>;
 
+export function LookupErrorMessage(arg1:string):Promise<string>;
+
 export function ReadPaths(arg1:Array<string>):Promise<backend.ReadPathsResult>;
 
 export function SetDevToolsState(arg1:boolean):Promise<void>;

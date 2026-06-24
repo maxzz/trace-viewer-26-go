@@ -87,3 +87,8 @@ func (a *App) shutdown(ctx context.Context) {}
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
 }
+
+// LookupErrorMessage resolves a Win32/HRESULT code to a system message via FormatMessageW.
+func (a *App) LookupErrorMessage(code string) string {
+	return lookupErrorMessage(code)
+}

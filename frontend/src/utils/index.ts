@@ -12,5 +12,4 @@ export * from "./theme-apply";
 export * from "./theme-utils";
 export * from "./merge-options";
 export * from "./valtio-array";
-
-// export * from "./uuid"; // use it from manifest
+export * from "./quit-app";

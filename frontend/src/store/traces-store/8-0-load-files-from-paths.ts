@@ -1,11 +1,16 @@
 import { readPathsFromBackend } from "@/wails/read-paths";
 import { pathFileDataToUint8Array } from "@/wails/path-file-data";
+import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 import { closeAllFiles } from "./0-2-files-actions";
 import { asyncLoadAnyFiles } from "./8-1-load-files";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
 
 export async function asyncLoadFilesFromPaths(paths: string[]) {
+    if (!isBackendAvailable()) {
+        return;
+    }
+
     if (paths.length === 0) {
         return;
     }

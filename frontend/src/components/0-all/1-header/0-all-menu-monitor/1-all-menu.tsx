@@ -6,6 +6,8 @@ import { closeAllFiles, closeFile, closeOtherFiles } from "@/store/traces-store/
 import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
 import { filesCountAtom } from "@/store/6-filtered-files";
 import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { quitApplication } from "@/utils/quit-app";
 import { notice } from "../../../ui/local-ui/7-toaster";
 
 export function TopMenu() {
@@ -29,11 +31,15 @@ export function TopMenu() {
                     <MenubarSeparator />
                     <MenuItemCloseOptions />
 
-                    {/* Exit Menu Item - not implemented yet */}
-                    {/* <MenubarSeparator />
-                        <MenubarItem disabled>
-                            Exit <MenubarShortcut>Ctrl+Q</MenubarShortcut>
-                        </MenubarItem> */}
+                    {isBackendAvailable() && (
+                        <>
+                            <MenubarSeparator />
+                            <MenubarItem onClick={quitApplication}>
+                                Exit
+                                <MenubarShortcut>Ctrl+Q</MenubarShortcut>
+                            </MenubarItem>
+                        </>
+                    )}
                 </MenubarContent>
             </MenubarMenu>
 

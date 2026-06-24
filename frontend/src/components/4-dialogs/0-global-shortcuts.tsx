@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { atom, useSetAtom } from "jotai";
 import { dialogBlockLoadFiltersOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogOptionsOpenAtom } from "@/store/2-ui-atoms";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { quitApplication } from "@/utils/quit-app";
 
 export function useTopMenuGlobalShortcuts() {
     const handleGlobalKeyDown = useSetAtom(handleTopMenuKeyDownAtom);
@@ -43,6 +45,12 @@ const handleTopMenuKeyDownAtom = atom(
                 if (!e.altKey) return;
                 e.preventDefault();
                 set(dialogBlockLoadFiltersOpenAtom, true);
+                return;
+            }
+            case 'q': {
+                if (!isBackendAvailable() || !(e.ctrlKey || e.metaKey)) return;
+                e.preventDefault();
+                quitApplication();
                 return;
             }
         }
