@@ -1,5 +1,4 @@
-import { LookupErrorMessage } from "../../wailsjs/go/backend/App";
-import { isBackendAvailable } from "./is-wails";
+import { getBackendApp, isBackendAvailable } from "./is-wails";
 
 export async function lookupErrorMessageFromBackend(code: string): Promise<string> {
     if (!isBackendAvailable()) {
@@ -11,5 +10,5 @@ export async function lookupErrorMessageFromBackend(code: string): Promise<strin
         return "";
     }
 
-    return LookupErrorMessage(trimmed);
+    return getBackendApp()!.LookupErrorMessage(trimmed);
 }
