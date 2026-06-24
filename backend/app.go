@@ -11,6 +11,7 @@ import (
 // App struct
 type App struct {
 	ctx                context.Context
+	windowBoundsCancel context.CancelFunc
 	pendingLaunchPaths []string
 	mu                 sync.Mutex
 }
@@ -31,6 +32,10 @@ func (a *App) Startup(ctx context.Context) {
 func (a *App) DomReady(ctx context.Context) {
 	a.restoreWindowOptions(ctx)
 	a.emitPendingLaunchPaths()
+
+	watchCtx, cancel := context.WithCancel(ctx)
+	a.windowBoundsCancel = cancel
+	a.startWindowBoundsWatcher(watchCtx)
 }
 
 func (a *App) emitPendingLaunchPaths() {
@@ -51,6 +56,7 @@ func (a *App) emitPendingLaunchPaths() {
 // either by clicking the window close button or calling runtime.Quit.
 // Returning true will cause the application to continue, false will continue shutdown as normal.
 func (a *App) BeforeClose(ctx context.Context) (prevent bool) {
+	a.stopWindowBoundsWatcher()
 	a.saveWindowOptions(ctx)
 	return false
 }
