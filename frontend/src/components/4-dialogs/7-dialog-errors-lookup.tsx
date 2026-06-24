@@ -134,7 +134,7 @@ export function DialogErrorsLookup() {
 
                 {!backendAvailable && (
                     <p className="text-muted-foreground text-xs text-pretty">
-                        Errors lookup not available in the web version.
+                        The error code lookup function is not available in the web version.
                     </p>
                 )}
 
