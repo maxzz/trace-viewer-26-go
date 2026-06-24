@@ -31,15 +31,13 @@ export function TopMenu() {
                     <MenubarSeparator />
                     <MenuItemCloseOptions />
 
-                    {isBackendAvailable() && (
-                        <>
-                            <MenubarSeparator />
-                            <MenubarItem onClick={quitApplication}>
-                                Exit
-                                <MenubarShortcut>Ctrl+Q</MenubarShortcut>
-                            </MenubarItem>
-                        </>
-                    )}
+                    {isBackendAvailable() && (<>
+                        <MenubarSeparator />
+                        <MenubarItem onClick={quitApplication}>
+                            Exit
+                            <MenubarShortcut>Ctrl+Q</MenubarShortcut>
+                        </MenubarItem>
+                    </>)}
                 </MenubarContent>
             </MenubarMenu>
 
@@ -60,15 +58,15 @@ export function TopMenu() {
                         Blocked files...
                         <MenubarShortcut>Alt+B</MenubarShortcut>
                     </MenubarItem>
-                    <MenubarItem onClick={() => setCalculatorOpen(true)}>
-                        Errors Code converter...
-                    </MenubarItem>
                     <MenubarItem onClick={() => setOptionsOpen(true)}>
                         Options...
                         <MenubarShortcut>Ctrl+,</MenubarShortcut>
                     </MenubarItem>
                     <MenubarSeparator />
                     <MenuItemShowFileHeader />
+                    <MenubarItem onClick={() => setCalculatorOpen(true)}>
+                        Errors lookup...
+                    </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>
 

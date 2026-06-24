@@ -16,29 +16,31 @@ export function DialogCalculator() {
     const [errorMessage, setErrorMessage] = useAtom(calculatorErrorMessageAtom);
     const backendAvailable = isBackendAvailable();
 
-    useEffect(() => {
-        if (!backendAvailable) {
-            setErrorMessage("");
-            return;
-        }
-
-        const code = hexValue.trim() || decimalValue.trim();
-        if (!code) {
-            setErrorMessage("");
-            return;
-        }
-
-        let cancelled = false;
-        void lookupErrorMessageFromBackend(code).then((message) => {
-            if (!cancelled) {
-                setErrorMessage(message);
+    useEffect(
+        () => {
+            if (!backendAvailable) {
+                setErrorMessage("");
+                return;
             }
-        });
 
-        return () => {
-            cancelled = true;
-        };
-    }, [backendAvailable, decimalValue, hexValue, setErrorMessage]);
+            const code = hexValue.trim() || decimalValue.trim();
+            if (!code) {
+                setErrorMessage("");
+                return;
+            }
+
+            let cancelled = false;
+            void lookupErrorMessageFromBackend(code).then((message) => {
+                if (!cancelled) {
+                    setErrorMessage(message);
+                }
+            });
+
+            return () => {
+                cancelled = true;
+            };
+        },
+        [backendAvailable, decimalValue, hexValue, setErrorMessage]);
 
     function handleOpenChange(nextOpen: boolean) {
         if (!nextOpen) {
@@ -50,7 +52,7 @@ export function DialogCalculator() {
         onOpenChange(nextOpen);
     }
 
-    function handleHexChange(event: ChangeEvent<HTMLInputElement>) {
+    function onHexValueChange(event: ChangeEvent<HTMLInputElement>) {
         const nextHex = event.target.value;
         setHexValue(nextHex);
 
@@ -63,7 +65,7 @@ export function DialogCalculator() {
         setDecimalValue(dec === undefined ? "" : String(dec));
     }
 
-    function handleDecimalChange(event: ChangeEvent<HTMLInputElement>) {
+    function onDecimalValueChange(event: ChangeEvent<HTMLInputElement>) {
         const nextDecimal = event.target.value;
         setDecimalValue(nextDecimal);
 
@@ -78,28 +80,14 @@ export function DialogCalculator() {
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-64!" aria-describedby={undefined}>
+            <DialogContent className="max-w-72!" aria-describedby={undefined}>
                 <DialogHeader>
                     <DialogTitle className="text-sm">
-                        Errors Code converter
+                        Errors lookup
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="py-2 grid gap-2">
-                    <div className="grid gap-1">
-                        <Label htmlFor="calculator-decimal">
-                            Decimal
-                        </Label>
-                        <Input
-                            id="calculator-decimal"
-                            className="font-mono"
-                            value={decimalValue}
-                            onChange={handleDecimalChange}
-                            placeholder="-2147024894"
-                            spellCheck={false}
-                        />
-                    </div>
-
+                <div className="py-2 grid grid-cols-2 gap-2">
                     <div className="grid gap-1">
                         <Label htmlFor="calculator-hex">
                             Hexadecimal
@@ -108,12 +96,34 @@ export function DialogCalculator() {
                             id="calculator-hex"
                             className="font-mono"
                             value={hexValue}
-                            onChange={handleHexChange}
+                            onChange={onHexValueChange}
                             placeholder="0x80070002"
                             spellCheck={false}
                         />
                     </div>
 
+                    <div className="grid gap-1">
+                        <Label htmlFor="calculator-decimal">
+                            Decimal
+                        </Label>
+                        <Input
+                            id="calculator-decimal"
+                            className="font-mono"
+                            value={decimalValue}
+                            onChange={onDecimalValueChange}
+                            placeholder="-2147024894"
+                            spellCheck={false}
+                        />
+                    </div>
+                </div>
+
+                {!backendAvailable && (
+                    <p className="text-muted-foreground text-xs text-pretty">
+                        Errors lookup not available in the web version.
+                    </p>
+                )}
+
+                <div className="min-h-24">
                     {backendAvailable && errorMessage && (
                         <p className="text-muted-foreground text-xs text-pretty">
                             {errorMessage}
@@ -121,7 +131,8 @@ export function DialogCalculator() {
                     )}
                 </div>
 
-                <DialogFooter>
+
+                <DialogFooter className="mt-4 justify-center!">
                     <Button onClick={() => onOpenChange(false)}>Close</Button>
                 </DialogFooter>
             </DialogContent>
