@@ -173,6 +173,7 @@ export function TraceList({ currentFileState }: { currentFileState: FileState; }
     return (
         <div
             ref={scrollRef}
+            data-trace-list
             className="group/tracelist relative size-full outline-none overflow-auto"
             onScroll={onScroll}
             onMouseMove={showOnAllTimes ? onMouseMove : undefined}

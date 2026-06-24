@@ -4,6 +4,7 @@ import { dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
 import { errorHexToSignedDecimal, parseSignedDecimalInput, signedDecimalToErrorHex } from "@/trace-viewer-core/3-format-error-line";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { lookupErrorMessageFromBackend } from "@/wails/lookup-error-message";
+import { getInitialErrorLookupValuesFromTraceView } from "@/components/2-trace-viewer/4-trace-error-lookup-init";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/shadcn/dialog";
 import { Input } from "@/components/ui/shadcn/input";
 import { Button } from "@/components/ui/shadcn/button";
@@ -15,6 +16,20 @@ export function DialogErrorsLookup() {
     const [decimalValue, setDecimalValue] = useAtom(calculatorDecimalValueAtom);
     const [errorMessage, setErrorMessage] = useAtom(calculatorErrorMessageAtom);
     const backendAvailable = isBackendAvailable();
+
+    useEffect(
+        () => {
+            if (!open) {
+                return;
+            }
+
+            const initialValues = getInitialErrorLookupValuesFromTraceView();
+            if (initialValues) {
+                setHexValue(initialValues.hex);
+                setDecimalValue(initialValues.decimal);
+            }
+        },
+        [open, setDecimalValue, setHexValue]);
 
     useEffect(
         () => {

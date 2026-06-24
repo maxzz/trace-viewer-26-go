@@ -61,6 +61,58 @@ export function parseSignedDecimalInput(value: string): number | undefined {
     return parsed;
 }
 
+export type ErrorCodeValues = {
+    hex: string;
+    decimal: string;
+};
+
+export function parseErrorCodeFromText(text: string): ErrorCodeValues | undefined {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        return undefined;
+    }
+
+    if (/^0x[0-9A-Fa-f]+$/i.test(trimmed) || /[A-Fa-f]/.test(trimmed) || /^8[0-9A-Fa-f]{7}$/i.test(trimmed)) {
+        const dec = errorHexToSignedDecimal(trimmed);
+        if (dec !== undefined) {
+            return toErrorCodeValues(dec);
+        }
+    }
+
+    const dec = parseSignedDecimalInput(trimmed);
+    if (dec !== undefined) {
+        return toErrorCodeValues(dec);
+    }
+
+    return undefined;
+}
+
+export function extractErrorCodeFromLineContent(content: string): ErrorCodeValues | undefined {
+    const hResultMatch = content.match(/h[Rr]esult\s*:\s*(0x[0-9A-Fa-f]+|-?\d+)/);
+    if (hResultMatch?.[1]) {
+        return parseErrorCodeFromText(hResultMatch[1]);
+    }
+
+    const hexMatch = content.match(/0x[0-9A-Fa-f]+/i);
+    if (hexMatch?.[0]) {
+        return parseErrorCodeFromText(hexMatch[0]);
+    }
+
+    const decimalMatch = content.match(/(?<!\d)-(\d+)(?![\d.])/);
+    if (decimalMatch?.[0]) {
+        return parseErrorCodeFromText(decimalMatch[0]);
+    }
+
+    return undefined;
+}
+
+function toErrorCodeValues(dec: number): ErrorCodeValues {
+    return {
+        hex: signedDecimalToErrorHex(dec),
+        decimal: String(dec),
+    };
+}
+
 function unsignedHexFromSignedDecimal(dec: number): string {
     return (dec >>> 0).toString(16).toUpperCase();
 }
