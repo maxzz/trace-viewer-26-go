@@ -4,7 +4,7 @@ import { HistoryButtons } from "../2-right-toolbar/1-btn-nav-history";
 import { ErrorsNavControls } from "../2-right-toolbar/2-btn-nav-errors";
 import { ToggleErrorsOnly, ToggleErrorsWithoutNoise, ToggleThreadOnly } from "../2-right-toolbar/3-top-menu-toggles";
 import { FileFilterDropdown } from "../2-right-toolbar/4-btn-files-filter-as-select";
-import { ParsingFilesProgress, TimelineBuildProgress } from "./3-loading-progress";
+import { LoadingProgress } from "./3-loading-progress";
 import { ButtonHighlightToggle } from "../2-right-toolbar/5-btn-highlight-toggle";
 import { ButtonThemeToggle } from "../2-right-toolbar/8-btn-theme-toggle";
 
@@ -15,14 +15,10 @@ export function HeaderRow() {
             <div className="flex-1 px-2 items-center gap-4 flex">
                 <TopMenu />
                 <FileReloadControls />
+                <LoadingProgress />
             </div>
 
             <div className="flex-1 px-2 gap-2 items-center justify-between flex">
-                <div className="items-center flex">
-                    <ParsingFilesProgress />
-                    <TimelineBuildProgress />
-                </div>
-
                 <div className="px-2 gap-2 items-center flex">
                     <HistoryButtons />
                     <ErrorsNavControls />

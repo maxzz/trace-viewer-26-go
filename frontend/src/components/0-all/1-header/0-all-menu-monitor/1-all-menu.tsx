@@ -76,7 +76,7 @@ export function TopMenu() {
                 </MenubarTrigger>
                 <MenubarContent>
                     <MenubarItem onClick={() => setAboutOpen(true)}>
-                        About
+                        About...
                     </MenubarItem>
                 </MenubarContent>
             </MenubarMenu>

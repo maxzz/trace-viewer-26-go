@@ -9,7 +9,16 @@ import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
 import { isLoadingFilesAtom } from "@/store/traces-store/8-1-load-files";
 import { dialogTimelineCancelOpenAtom } from "@/store/2-ui-atoms";
 
-export function ParsingFilesProgress() {
+export function LoadingProgress() {
+    return (
+        <div className="flex items-center">
+            <ParsingFilesProgress />
+            <TimelineBuildProgress />
+        </div>
+    );
+}
+
+function ParsingFilesProgress() {
     const isLoadingFiles = useAtomValue(isLoadingFilesAtom);
 
     if (!isLoadingFiles) {
@@ -17,14 +26,14 @@ export function ParsingFilesProgress() {
     }
 
     return (
-        <Button className="mr-2 px-2 h-6 text-xs text-foreground" variant="ghost" size="sm" disabled>
+        <Button className="mr-2 px-2 h-6 text-xs text-white bg-sky-600 rounded-sm opacity-100!" variant="ghost" size="sm" disabled>
             <Loader2 className="size-3 animate-spin" />
             Parsing files...
         </Button>
     );
 }
 
-export function TimelineBuildProgress() {
+function TimelineBuildProgress() {
     const setTimelineCancelOpen = useSetAtom(dialogTimelineCancelOpenAtom);
     const { allTimesIsLoading } = useSnapshot(allTimesStore);
 
@@ -33,7 +42,7 @@ export function TimelineBuildProgress() {
     }
 
     return (<>
-        <Button className="mr-2 px-2 h-6 text-xs text-foreground/60 cursor-pointer" variant="outline" size="sm" onClick={() => setTimelineCancelOpen(true)} title="Building timeline... Click to cancel.">
+        <Button className="mr-2 px-2 h-6 text-xs text-foreground/70 bg-sky-100 dark:bg-sky-950 hover:bg-sky-400 dark:hover:bg-sky-700 rounded-sm cursor-pointer" variant="outline" size="sm" onClick={() => setTimelineCancelOpen(true)} title="Building timeline... Click to cancel.">
             <Loader2 className="size-3 animate-spin" />
             Building timeline...
         </Button>
@@ -58,9 +67,9 @@ function TimelineCancelBuildDialog() {
                 </DialogHeader>
 
                 <DialogFooter>
-                    <Button variant="secondary" onClick={() => setOpen(false)}>Continue</Button>
+                    <Button variant="outline" onClick={() => setOpen(false)}>Continue</Button>
                     <Button
-                        variant="destructive"
+                        variant="default"
                         onClick={
                             () => {
                                 cancelAllTimesBuild();
