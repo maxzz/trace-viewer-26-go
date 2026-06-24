@@ -1,6 +1,4 @@
-export namespace backend {
-	
-	export class PathFile {
+export class PathFile {
 	    name: string;
 	    path: string;
 	    data: number[];
@@ -50,6 +48,3 @@ export namespace backend {
 		    return a;
 		}
 	}
-
-}
-

@@ -50,8 +50,8 @@
     },
     "scripts": {
         "tsc": "tsc -b tsconfig.app.json -w",
-        "dev": "vite",
-        "build": "upen && tsc -b && vite build",
+        "dev": "node scripts/fix-wails-models.mjs && vite",
+        "build": "upen && node scripts/fix-wails-models.mjs && tsc -b && vite build",
         "preview": "vite preview",
         "to-npm": "pnpm build && gh-pages -d dist"
     }
