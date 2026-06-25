@@ -181,14 +181,7 @@ export function TraceList({ currentFileState }: { currentFileState: FileState; }
             tabIndex={0}
         >
             {/* Empty state for Errors-only mode */}
-            {isErrorsOnlyActive && linesForView.length === 0 && (
-                <div className="absolute inset-0 p-2 bg-foreground/5 pointer-events-none flex items-start justify-center">
-                    <div className="px-3 py-2 max-w-120 text-center text-xs text-foreground bg-background/80 border border-border rounded-md shadow-sm">
-                        <div className="font-semibold">The error-only display mode is activated.</div>
-                        <div className="text-green-600">This file has no errors to show.</div>
-                    </div>
-                </div>
-            )}
+            {isErrorsOnlyActive && linesForView.length === 0 && <ViewWhenShowingErrorsOnlyButThereIsNoOne />}
 
             {/* for styles debugging */}
             {/* <div className={iconContainerClasses} title="Locate in all times timeline">
@@ -244,6 +237,17 @@ export function TraceList({ currentFileState }: { currentFileState: FileState; }
 }
 
 const hoveredTimestampAtom = atom<{ timestamp: string; top: number; } | null>(null); // Atom to track hovered timestamp info
+
+function ViewWhenShowingErrorsOnlyButThereIsNoOne() {
+    return (
+        <div className="absolute inset-0 p-2 bg-foreground/5 pointer-events-none flex items-start justify-center">
+            <div className="px-3 py-2 max-w-120 text-center text-xs text-foreground bg-background/80 border border-border rounded-md shadow-sm">
+                <div className="font-semibold">The error-only display mode is activated.</div>
+                <div className="text-green-600">This file has no errors to show.</div>
+            </div>
+        </div>
+    );
+}
 
 function TraceViewScrollController({ scrollRef, containerHeight, selectedFileId, currentLineIdxAtom, baseIndexToDisplayIndex }: {
     currentLineIdxAtom: PrimitiveAtom<number>;
