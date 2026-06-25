@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/shadcn/button';
 import { Switch } from '@/components/ui/shadcn/switch';
 import { Label } from '@/components/ui/shadcn/label';
 import { classNames } from '@/utils';
+import { notice } from '../ui/local-ui/7-toaster/7-toaster';
 
 export function DialogOptions() {
     const [open, onOpenChange] = useAtom(dialogOptionsOpenAtom);
@@ -22,9 +23,9 @@ export function DialogOptions() {
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="py-2 text-xs grid gap-2">
+                <div className="py-2 text-xs grid gap-1">
                     <div className="font-semibold">
-                        Trace viewer options:
+                        Trace view:
                     </div>
 
                     <OptionCheckbox checked={useIconsForEntryExit} onCheckedChange={handleUseIconsChange} label="Use Icons for Entry/Exit lines" />
@@ -36,7 +37,7 @@ export function DialogOptions() {
                     <OptionCheckbox checked={showErrorsNavigationWrapDialog} onCheckedChange={handleShowErrorsNavWrapDialogChange} label="Show wrap dialog when navigating errors" />
 
                     <div className="mt-2 font-semibold">
-                        All times options:
+                        All-time column:
                     </div>
 
                     <OptionCheckbox checked={allTimes.show} onCheckedChange={handleShowTimelineChange} label="Show all times column" />
@@ -49,16 +50,16 @@ export function DialogOptions() {
                         <Label className="text-xs font-normal text-balance">
                             All times precision
                         </Label>
-                        <Input className="w-12 h-6 text-xs p-1" value={allTimes.precision} onChange={handleTimelinePrecisionChange} min={0} max={5} type="number" />
+                        <Input className="w-12 h-6 scale-85 text-xs p-1" value={allTimes.precision} onChange={handleTimelinePrecisionChange} min={0} max={5} type="number" />
                     </div>
 
-                    <div className="mt-2 font-semibold">Footer options:</div>
+                    <div className="mt-2 font-semibold">Footer:</div>
 
                     <OptionCheckbox checked={showFooter} onCheckedChange={handleShowFooterChange} label="Show footer" />
 
                     <OptionCheckbox checked={extraInFooter} onCheckedChange={handleExtraInFooterChange} label="Show info from the file header in the footer" />
 
-                    <div className="mt-2 font-semibold">History options:</div>
+                    <div className="mt-2 font-semibold">History:</div>
 
                     <Label className="text-xs font-normal flex items-center space-x-1">
                         Max history items
@@ -80,7 +81,7 @@ export function DialogOptions() {
                         </span>
                     </Label>
 
-                    <div className="mt-2 font-semibold">File update options:</div>
+                    <div className="mt-2 font-semibold">File changes monitor:</div>
 
                     <OptionCheckbox checked={fileUpdates.sizeMonitorEnabled} onCheckedChange={handleSizeMonitorEnabledChange} label="Monitor files for size changes" />
 
@@ -90,14 +91,14 @@ export function DialogOptions() {
                         <Label className="text-xs font-normal text-balance">
                             Auto update interval (ms)
                         </Label>
-                        <Input className="w-20 h-6 text-xs p-1" value={fileUpdates.autoUpdateIntervalMs} onChange={handleAutoUpdateIntervalChange} min={500} step={500} type="number" />
+                        <Input className="w-20 h-6 scale-85 text-xs p-1" value={fileUpdates.autoUpdateIntervalMs} onChange={handleAutoUpdateIntervalChange} min={500} step={500} type="number" />
                     </div>
 
                     <div className="flex items-center justify-between space-x-2">
                         <Label className="text-xs font-normal text-balance">
                             Minimum size change before auto update (bytes)
                         </Label>
-                        <Input className="w-20 h-6 text-xs p-1" value={fileUpdates.autoUpdateMinSizeChangeBytes} onChange={handleAutoUpdateMinSizeChangeChange} min={0} step={256} type="number" />
+                        <Input className="w-20 h-6 scale-85 text-xs p-1" value={fileUpdates.autoUpdateMinSizeChangeBytes} onChange={handleAutoUpdateMinSizeChangeChange} min={0} step={256} type="number" />
                     </div>
                 </div>
 
@@ -113,12 +114,12 @@ export function DialogOptions() {
 function OptionCheckbox({ checked, onCheckedChange, label, disabled, title }: { checked: boolean, onCheckedChange: (checked: boolean) => void, label: React.ReactNode, disabled?: boolean; title?: string; }) {
     return (
         <Label
-            className={classNames("text-xs font-normal flex items-center justify-between space-x-1", disabled && "opacity-50")}
+            className={classNames("text-xs font-normal flex items-center justify-between space-x-1 cursor-pointer", disabled && "opacity-50")}
             data-disabled={disabled}
             title={title}
         >
             {label}
-            <Switch className={classNames(disabled && "disabled:opacity-100")} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+            <Switch className={classNames("scale-75 cursor-pointer", disabled && "disabled:opacity-100")} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
         </Label>
     );
 }
@@ -189,6 +190,8 @@ function handleAutoUpdateIntervalChange(e: React.ChangeEvent<HTMLInputElement>) 
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 500) {
         appSettings.fileUpdates.autoUpdateIntervalMs = val;
+    } else {
+        notice.info('The auto update interval must be at least 500ms');
     }
 }
 
@@ -196,5 +199,7 @@ function handleAutoUpdateMinSizeChangeChange(e: React.ChangeEvent<HTMLInputEleme
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 0) {
         appSettings.fileUpdates.autoUpdateMinSizeChangeBytes = val;
+    } else {
+        notice.info('The minimum size change before auto update must be at least 0 bytes');
     }
 }
