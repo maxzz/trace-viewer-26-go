@@ -62,16 +62,18 @@ export function MonitorControls() {
     return (
         <div className="h-6 border rounded flex items-center" title="File Updates">
             <Button
-                className="group size-6 active:scale-75 focus:ring-0 rounded"
-                variant="ghost"
-                size="icon"
+                className="group h-6 active:scale-y-75 focus:ring-0 rounded"
+                variant="outline"
+                size="sm"
                 onClick={() => { appSettings.fileUpdates.sizeMonitorEnabled = !trackingEnabled; }}
                 title={trackingEnabled ? "Stop Tracking File Changes" : "Track File Changes"}
             >
                 {trackingEnabled
-                    ? <IconPlayStop className="size-3.5 text-red-500/50" />
-                    : <IconPlayStart className="size-3.5 text-foreground/50" />
-                }
+                    ? (<>
+                        <IconPlayStop className="size-3.5 text-red-500/50" /> Start Monitoring
+                    </>) : (<>
+                        <IconPlayStart className="size-3.5 text-foreground/50" /> Stop Monitoring
+                    </>)}
             </Button>
         </div>
     );
