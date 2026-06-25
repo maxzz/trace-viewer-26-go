@@ -237,8 +237,12 @@ async function newTraceItemLoad(fileState: FileState, file: File): Promise<void>
         clearNewLinesMarker(fileState);
         syncLoadedFileSize(fileState, file.size);
         data.isLoading = false;
-    } catch (e: any) {
-        data.errorLoadingFile = e.message || "Unknown error";
+    } catch (e: unknown) {
+        if (shouldDeferLoadToMonitorCycle(fileState, e)) {
+            deferLoadToNextMonitorCycle(fileState);
+        } else {
+            data.errorLoadingFile = e instanceof Error ? e.message : "Unknown error";
+        }
         data.isLoading = false;
         console.error("Failed to load trace", e);
     }
@@ -327,20 +331,28 @@ export async function asyncMonitorTick(): Promise<void> {
         )
     );
 
-    if (!followTail || !selectedId) {
+    if (!selectedId || !appSettings.fileUpdates.sizeMonitorEnabled) {
         return;
     }
 
-    const tailCandidate = probeResults.find((probe) => !!probe && probe.grew && probe.fileState.id === selectedId);
-    if (!tailCandidate) {
+    const selectedProbe = probeResults.find((probe) => !!probe && probe.fileState.id === selectedId);
+    if (!selectedProbe) {
         return;
     }
 
-    const prefetchedFiles = new Map<string, File>([[tailCandidate.fileState.id, tailCandidate.currentFile]]);
-    const updatedCount = await asyncReloadFiles([tailCandidate.fileState], { reason: "auto", prefetchedFiles });
+    const { fileState, currentFile, grew } = selectedProbe;
+    const needsInitialLoad = fileState.data.rawLines.length === 0;
+    const needsContentReload = followTail && (grew || fileState.updateInfo.hasUnreloadedSizeChange);
 
-    if (updatedCount > 0) {
-        followSelectedFileTail(tailCandidate.fileState);
+    if (!needsInitialLoad && !needsContentReload) {
+        return;
+    }
+
+    const prefetchedFiles = new Map<string, File>([[fileState.id, currentFile]]);
+    const updatedCount = await asyncReloadFiles([fileState], { reason: "auto", prefetchedFiles });
+
+    if (updatedCount > 0 && needsContentReload) {
+        followSelectedFileTail(fileState);
     }
 }
 
@@ -467,7 +479,12 @@ async function reloadSingleFile(fileState: ReloadableFileState, options: ReloadS
     startFileUpdate(fileState);
 
     try {
-        const { file, parsed } = await parseLatestFileWithRetry(fileState, controller, options.prefetchedFile);
+        const { file, parsed } = await parseLatestFileWithRetry(
+            fileState,
+            controller,
+            options.prefetchedFile,
+            options.reason
+        );
         throwIfReloadCancelled(fileState.id, controller);
 
         applyParsedTraceData(fileState, file.name, parsed);
@@ -480,6 +497,12 @@ async function reloadSingleFile(fileState: ReloadableFileState, options: ReloadS
     } catch (error) {
         if (isReloadCancelled(fileState.id, controller, error)) {
             clearCancelledUpdate(fileState);
+            refreshCurrentFileStateIfSelected(fileState);
+            return "cancelled";
+        }
+
+        if (shouldDeferLoadToMonitorCycle(fileState, error) && options.reason === "auto") {
+            deferLoadToNextMonitorCycle(fileState);
             refreshCurrentFileStateIfSelected(fileState);
             return "cancelled";
         }
@@ -601,7 +624,12 @@ function clearCancelledUpdate(fileState: FileState) {
     refreshCurrentFileStateIfSelected(fileState);
 }
 
-async function parseLatestFileWithRetry(fileState: ReloadableFileState, controller: AbortController, prefetchedFile?: File) {
+async function parseLatestFileWithRetry(
+    fileState: ReloadableFileState,
+    controller: AbortController,
+    prefetchedFile?: File,
+    reason: ReloadReason = "manual"
+) {
     let nextFile: File | undefined = prefetchedFile;
 
     for (let attempt = 1; attempt <= FILE_RELOAD_RETRY_ATTEMPTS; attempt++) {
@@ -614,7 +642,15 @@ async function parseLatestFileWithRetry(fileState: ReloadableFileState, controll
             throwIfReloadCancelled(fileState.id, controller);
             return { file: fileToParse, parsed };
         } catch (error) {
-            if (isReloadCancelled(fileState.id, controller, error) || attempt >= FILE_RELOAD_RETRY_ATTEMPTS) {
+            if (isReloadCancelled(fileState.id, controller, error)) {
+                throw error;
+            }
+
+            if (reason === "auto" && isNotReadableError(error)) {
+                throw error;
+            }
+
+            if (attempt >= FILE_RELOAD_RETRY_ATTEMPTS) {
                 throw error;
             }
 
@@ -624,6 +660,38 @@ async function parseLatestFileWithRetry(fileState: ReloadableFileState, controll
     }
 
     throw new Error("Failed to reload trace.");
+}
+
+function isNotReadableError(error: unknown): boolean {
+    if (error instanceof DOMException && error.name === "NotReadableError") {
+        return true;
+    }
+
+    if (error instanceof Error && error.name === "NotReadableError") {
+        return true;
+    }
+
+    const message = error instanceof Error ? error.message : String(error);
+    return message.includes("NotReadableError");
+}
+
+function shouldDeferLoadToMonitorCycle(fileState: FileState, error: unknown): boolean {
+    return isNotReadableError(error)
+        && canReloadFile(fileState)
+        && appSettings.fileUpdates.sizeMonitorEnabled;
+}
+
+function deferLoadToNextMonitorCycle(fileState: FileState) {
+    fileState.data.errorLoadingFile = null;
+
+    if (fileState.data.rawLines.length === 0) {
+        fileState.updateInfo.lastLoadedSize = 0;
+    }
+
+    fileState.updateInfo.hasUnreloadedSizeChange = true;
+    fileState.updateInfo.status = "idle";
+    fileState.updateInfo.failureMessage = null;
+    refreshCurrentFileStateIfSelected(fileState);
 }
 
 async function delayWithAbort(ms: number, signal: AbortSignal) {
