@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import { notice } from "../../components/ui/local-ui/7-toaster";
+import { timelineBuildNotice } from "@/components/0-all/1-header/0-all-menu-monitor/4-timeline-build-notice";
 import { appSettings } from "../1-ui-settings";
 import { type TraceLine } from "../../trace-viewer-core/9-core-types";
 import { type FileState, filesStore } from "./9-types-files-store";
@@ -75,16 +75,16 @@ export const allTimesStore = proxy<AllTimesStore>({
             allTimesStore.setAllTimes(items);
 
             if (appSettings.allTimes.showBuildDoneNotice) {
-                notice.success("Timeline is ready");
+                timelineBuildNotice.success("Timeline is ready");
             }
         } catch (e: any) {
             if (e.message === 'Timeline build cancelled') {
                 // unexpected here unless we cancelled it
-                notice.info("Timeline build cancelled");
+                timelineBuildNotice.info("Timeline build cancelled");
             } else {
                 console.error("Timeline build failed", e);
                 allTimesStore.setAllTimesLoading(false); // Make sure to stop loading
-                notice.error(`Timeline build failed: ${e.message}`);
+                timelineBuildNotice.error(`Timeline build failed: ${e.message}`);
             }
         }
     }

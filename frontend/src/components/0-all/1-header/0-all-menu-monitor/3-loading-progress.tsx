@@ -3,7 +3,7 @@ import { useSnapshot } from "valtio";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/shadcn/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/shadcn/dialog";
-import { notice } from "@/components/ui/local-ui/7-toaster";
+import { timelineBuildNotice, TimelineBuildNotice } from "./4-timeline-build-notice";
 import { cancelAllTimesBuild } from "@/workers-client";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
 import { isLoadingFilesAtom } from "@/store/traces-store/8-1-load-files";
@@ -14,6 +14,7 @@ export function LoadingProgress() {
         <div className="flex items-center">
             <ParsingFilesProgress />
             <TimelineBuildProgress />
+            <TimelineBuildNotice />
         </div>
     );
 }
@@ -75,7 +76,7 @@ function TimelineCancelBuildDialog() {
                                 cancelAllTimesBuild();
                                 allTimesStore.setAllTimesLoading(false);
                                 allTimesStore.setAllTimes([]);
-                                notice.info("Timeline build cancelled");
+                                timelineBuildNotice.info("Timeline build cancelled");
                                 setOpen(false);
                             }
                         }
