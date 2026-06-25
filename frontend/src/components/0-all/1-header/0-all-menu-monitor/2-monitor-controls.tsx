@@ -70,9 +70,9 @@ export function MonitorControls() {
             >
                 {trackingEnabled
                     ? (<>
-                        <IconPlayStop className="size-3.5 text-red-500/50" /> Start Monitoring
+                        <IconPlayStop className="size-3.5 text-red-500/50 fill-red-500" /> Stop Monitoring
                     </>) : (<>
-                        <IconPlayStart className="size-3.5 text-foreground/50" /> Stop Monitoring
+                        <IconPlayStart className="size-3.5 text-foreground/50" /> Start Monitoring
                     </>)}
             </Button>
         </div>
