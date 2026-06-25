@@ -240,10 +240,10 @@ const hoveredTimestampAtom = atom<{ timestamp: string; top: number; } | null>(nu
 
 function ViewWhenShowingErrorsOnlyButThereIsNoOne() {
     return (
-        <div className="absolute inset-0 p-2 bg-foreground/5 pointer-events-none flex items-start justify-center">
+        <div className="absolute inset-0 p-2 bg-foreground/5 pointer-events-none grid place-items-center">
             <div className="px-3 py-2 max-w-120 text-center text-xs text-foreground bg-background/80 border border-border rounded-md shadow-sm">
-                <div className="font-semibold">The error-only display mode is activated.</div>
-                <div className="text-green-600">This file has no errors to show.</div>
+                <div className="font-semibold">The "error-only" mode is activate.</div>
+                <div className="">This file has no errors to show.</div>
             </div>
         </div>
     );

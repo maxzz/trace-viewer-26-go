@@ -26,7 +26,7 @@ function ParsingFilesProgress() {
     }
 
     return (
-        <Button className="mr-2 px-2 h-6 text-xs text-white bg-sky-600 rounded-sm opacity-100!" variant="ghost" size="sm" disabled>
+        <Button className="mr-2 px-2 h-6 text-xs text-white bg-sky-600 opacity-100! rounded-sm" variant="ghost" size="sm" disabled>
             <Loader2 className="size-3 animate-spin" />
             Parsing files...
         </Button>
