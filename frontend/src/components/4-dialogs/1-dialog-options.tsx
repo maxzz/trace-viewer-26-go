@@ -1,3 +1,4 @@
+import { type ChangeEvent, type ReactNode, type ComponentProps } from 'react';
 import { useAtom } from 'jotai';
 import { useSnapshot } from 'valtio';
 import { appSettings } from '@/store/1-ui-settings';
@@ -69,16 +70,18 @@ export function DialogOptions() {
                     <div className="mt-2 font-semibold">Startup options:</div>
 
                     <Label className="text-xs font-normal flex flex-col items-start gap-1">
-                        Select file pattern on start:
+                        <div>
+                            Select file pattern on start:
+                            <span className="text-muted-foreground text-[10px]">
+                                {' '}(use * for wildcard or /pattern/ for regex)
+                            </span>
+                        </div>
                         <Input
                             className="h-6 text-xs p-1"
                             value={startupFilePattern}
                             onChange={handleStartupPatternChange}
                             placeholder="e.g. *.dll.* or /regex/"
                         />
-                        <span className="self-end text-muted-foreground text-[10px]">
-                            Use * for wildcard or /pattern/ for regex
-                        </span>
                     </Label>
 
                     <div className="mt-2 font-semibold">File changes monitor:</div>
@@ -87,19 +90,23 @@ export function DialogOptions() {
 
                     <OptionCheckbox checked={fileUpdates.showFailureNotice} onCheckedChange={handleShowFileUpdateFailureNoticeChange} label="Show info notice when file update fails after retries" />
 
-                    <div className="flex items-center justify-between space-x-2">
-                        <Label className="text-xs font-normal text-balance">
-                            Auto update interval (ms)
-                        </Label>
-                        <Input className="w-20 h-6 scale-85 text-xs p-1" value={fileUpdates.autoUpdateIntervalMs} onChange={handleAutoUpdateIntervalChange} min={500} step={500} type="number" />
-                    </div>
+                    <OptionRowInput
+                        label="Auto update interval (ms)"
+                        value={fileUpdates.autoUpdateIntervalMs}
+                        onChange={handleAutoUpdateIntervalChange}
+                        min={500}
+                        step={500}
+                        type="number"
+                    />
 
-                    <div className="flex items-center justify-between space-x-2">
-                        <Label className="text-xs font-normal text-balance">
-                            Minimum size change before auto update (bytes)
-                        </Label>
-                        <Input className="w-20 h-6 scale-85 text-xs p-1" value={fileUpdates.autoUpdateMinSizeChangeBytes} onChange={handleAutoUpdateMinSizeChangeChange} min={0} step={256} type="number" />
-                    </div>
+                    <OptionRowInput
+                        label="Minimum size change before auto update (bytes)"
+                        value={fileUpdates.autoUpdateMinSizeChangeBytes}
+                        onChange={handleAutoUpdateMinSizeChangeChange}
+                        min={0}
+                        step={256}
+                        type="number"
+                    />
                 </div>
 
                 <DialogFooter className="justify-center!">
@@ -111,7 +118,7 @@ export function DialogOptions() {
     );
 }
 
-function OptionCheckbox({ checked, onCheckedChange, label, disabled, title }: { checked: boolean, onCheckedChange: (checked: boolean) => void, label: React.ReactNode, disabled?: boolean; title?: string; }) {
+function OptionCheckbox({ checked, onCheckedChange, label, disabled, title }: { checked: boolean, onCheckedChange: (checked: boolean) => void, label: ReactNode, disabled?: boolean; title?: string; }) {
     return (
         <Label
             className={classNames("text-xs font-normal flex items-center justify-between space-x-1 cursor-pointer", disabled && "opacity-50")}
@@ -121,6 +128,17 @@ function OptionCheckbox({ checked, onCheckedChange, label, disabled, title }: { 
             {label}
             <Switch className={classNames("scale-75 cursor-pointer", disabled && "disabled:opacity-100")} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
         </Label>
+    );
+}
+
+function OptionRowInput({ label, inputClassName, ...inputProps }: { label: ReactNode; inputClassName?: string; } & ComponentProps<typeof Input>) {
+    return (
+        <div className="flex items-center justify-between space-x-2">
+            <Label className="text-xs font-normal text-balance">
+                {label}
+            </Label>
+            <Input className={classNames("w-16 h-6 scale-85 text-xs p-1", inputClassName)} {...inputProps} />
+        </div>
     );
 }
 
@@ -148,7 +166,7 @@ function handleShowErrorsNavWrapDialogChange(checked: boolean) {
     appSettings.showErrorsNavigationWrapDialog = checked;
 }
 
-function handleHistoryLimitChange(e: React.ChangeEvent<HTMLInputElement>) {
+function handleHistoryLimitChange(e: ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val > 0) {
         appSettings.historyLimit = val;
@@ -163,7 +181,7 @@ function handleCombinedOnLeftChange(checked: boolean) {
     appSettings.allTimes.onLeft = checked;
 }
 
-function handleTimelinePrecisionChange(e: React.ChangeEvent<HTMLInputElement>) {
+function handleTimelinePrecisionChange(e: ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 0 && val <= 5) {
         appSettings.allTimes.precision = val;
@@ -174,7 +192,7 @@ function handleShowTimelineNotificationChange(checked: boolean) {
     appSettings.allTimes.showBuildDoneNotice = checked;
 }
 
-function handleStartupPatternChange(e: React.ChangeEvent<HTMLInputElement>) {
+function handleStartupPatternChange(e: ChangeEvent<HTMLInputElement>) {
     appSettings.startupFilePattern = e.target.value;
 }
 
@@ -186,7 +204,7 @@ function handleSizeMonitorEnabledChange(checked: boolean) {
     appSettings.fileUpdates.sizeMonitorEnabled = checked;
 }
 
-function handleAutoUpdateIntervalChange(e: React.ChangeEvent<HTMLInputElement>) {
+function handleAutoUpdateIntervalChange(e: ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 500) {
         appSettings.fileUpdates.autoUpdateIntervalMs = val;
@@ -195,7 +213,7 @@ function handleAutoUpdateIntervalChange(e: React.ChangeEvent<HTMLInputElement>) 
     }
 }
 
-function handleAutoUpdateMinSizeChangeChange(e: React.ChangeEvent<HTMLInputElement>) {
+function handleAutoUpdateMinSizeChangeChange(e: ChangeEvent<HTMLInputElement>) {
     const val = parseInt(e.target.value, 10);
     if (!isNaN(val) && val >= 0) {
         appSettings.fileUpdates.autoUpdateMinSizeChangeBytes = val;
