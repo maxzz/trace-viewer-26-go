@@ -1,7 +1,7 @@
 import { proxy } from 'valtio';
+import { isBackendAvailable } from '@/wails/is-wails';
 
 export const defaultTitle = 'Trace Viewer';
-export const defaultTitleShort = 'TV';
 
 export const appMainTitle = proxy<{ title: string; }>({
     title: defaultTitle,
@@ -64,11 +64,17 @@ function formatAppTitle(source: AppTitleSource | null): string {
         return defaultTitle;
     }
 
+    const titleShort = getDefaultTitleShort();
+
     if (source.kind === 'name') {
-        return `${defaultTitleShort} - ${source.name}`;
+        return `${titleShort} - ${source.name}`;
     }
 
-    return `${defaultTitleShort} - ${source.directoryPath}/*`;
+    return `${titleShort} - ${source.directoryPath}/*`;
+}
+
+function getDefaultTitleShort(): string {
+    return isBackendAvailable() ? 'TV' : 'TVweb';
 }
 
 function getFolderNameFromRelativePaths(files: File[]): string | null {
