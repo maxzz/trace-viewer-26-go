@@ -7,7 +7,7 @@ import { Button } from "../ui/shadcn/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/shadcn/dialog";
 import { Input } from "../ui/shadcn/input";
 import { Switch } from "../ui/shadcn/switch";
-import { dialogBlockLoadFiltersOpenAtom } from "@/store/2-ui-atoms";
+import { dialogBlockLoadFiltersOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { appSettings, type BlockLoadFilter } from "@/store/1-ui-settings";
 import { blockLoadFilterActions } from "@/store/9-block-load-filters";
 import { turnOffAutoComplete } from "@/utils/disable-hidden-children";

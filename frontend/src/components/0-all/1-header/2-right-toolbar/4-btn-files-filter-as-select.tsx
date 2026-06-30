@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Check } from "lucide-react";
 import { IconFilterGreen, IconFilterOff, IconFilterOn, IconL_ChevronDown } from "@/components/ui/icons/normal";
 import { filterActions } from "@/store/4-file-filters";
-import { dialogEditFiltersOpenAtom } from "@/store/2-ui-atoms";
+import { dialogEditFiltersOpenAtom } from "@/store/2-ui-dialog-atoms";
 
 export function FileFilterDropdown() {
     const [isOpen, setIsOpen] = useState(false);

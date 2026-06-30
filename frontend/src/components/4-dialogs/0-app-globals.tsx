@@ -1,4 +1,4 @@
-import { WindowsAppTitleCaption } from "./8-windows-app-title-caption";
+import { WindowsAppTitleCaption } from "./8-8-windows-app-title-caption";
 import { DialogEditHighlightRules } from "./5-dialog-edit-highlight-rules";
 import { DialogAbout } from "./3-dialog-about";
 import { DialogEditFilters } from "./4-dialog-edit-filters";
@@ -7,6 +7,7 @@ import { DialogOptions } from "./1-dialog-options";
 import { DialogEditBlockLoadFilters } from "./6-dialog-edit-block-load-filters";
 import { DialogErrorsLookup } from "./7-dialog-errors-lookup";
 import { DialogErrorsNavWrap } from "../0-all/1-header/2-right-toolbar/2-btn-nav-errors";
+import { DialogCancelBuild } from "./8-7-dialog-cancel-build";
 import { useTopMenuGlobalShortcuts } from "./0-global-shortcuts";
 
 export function AppGlobalsAndDialogs() {
@@ -29,5 +30,6 @@ function Dialogs() {
         <DialogEditHighlightRules />
         <DialogErrorsLookup />
         <DialogErrorsNavWrap />
+        <DialogCancelBuild />
     </>);
 }

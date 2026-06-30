@@ -1,5 +1,5 @@
 import { getDefaultStore } from 'jotai';
-import { isZipProcessingAtom } from '@/store/2-ui-atoms';
+import { isZipProcessingAtom } from '@/store/2-ui-dialog-atoms';
 import { type ZipWorkerRequest, type ZipWorkerResponse } from '@/workers/zip-worker-types';
 import ZipWorker from '@/workers/zip.worker?worker';
 

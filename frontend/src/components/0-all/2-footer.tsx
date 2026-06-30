@@ -7,7 +7,7 @@ import { currentFileStateAtom } from "../../store/traces-store/0-1-files-current
 import { allFilesErrorsTotalsAtom } from "../../store/traces-store/4-4-errors-totals";
 import { excludeNoiseErrorsInSelectedFileAtom } from "../../store/8-errors-noise-setting";
 import { fileLoadSummaryAtom } from "../../store/traces-store/8-4-file-load-summary";
-import { dialogFileHeaderOpenAtom } from "../../store/2-ui-atoms";
+import { dialogFileHeaderOpenAtom } from "../../store/2-ui-dialog-atoms";
 
 export function Footer() {
     const fileCount = useAtomValue(filesCountAtom);

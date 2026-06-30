@@ -5,7 +5,7 @@ import { currentFileStateAtom } from "@/store/traces-store/0-1-files-current-sta
 import { closeAllFiles, closeFile, closeOtherFiles } from "@/store/traces-store/0-2-files-actions";
 import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
 import { filesCountAtom } from "@/store/6-filtered-files";
-import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
+import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { quitApplication } from "@/utils/quit-app";
 import { notice } from "../../../ui/local-ui/7-toaster";

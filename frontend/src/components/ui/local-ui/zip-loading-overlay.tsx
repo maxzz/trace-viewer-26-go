@@ -1,6 +1,6 @@
 import { useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
-import { isZipProcessingAtom } from '@/store/2-ui-atoms';
+import { isZipProcessingAtom } from '@/store/2-ui-dialog-atoms';
 import { Spinner } from '../icons/animated/wait-v1';
 
 export function ZipLoadingOverlay() {

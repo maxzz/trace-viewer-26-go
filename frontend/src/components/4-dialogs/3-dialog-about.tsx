@@ -1,6 +1,6 @@
 import { useAtom } from "jotai";
 import { envBuildVersion, envModifiedDate } from "@/utils";
-import { dialogAboutOpenAtom } from "@/store/2-ui-atoms";
+import { dialogAboutOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/shadcn/dialog";
 import { Button } from "@/components/ui/shadcn/button";
 import { IconAppLogo, IconBinocular } from "@/components/ui/icons";

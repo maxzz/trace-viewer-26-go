@@ -1,5 +1,5 @@
 import { proxy } from "valtio";
-import { timelineBuildNotice } from "@/components/0-all/1-header/0-all-menu-monitor/4-timeline-build-notice";
+import { timelineBuildNotice } from "@/components/0-all/1-header/0-all-menu-monitor/3-1-notice-timeline";
 import { appSettings } from "../1-ui-settings";
 import { type TraceLine } from "../../trace-viewer-core/9-core-types";
 import { type FileState, filesStore } from "./9-types-files-store";

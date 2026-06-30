@@ -2,7 +2,7 @@ import { type ChangeEvent, type ReactNode, type ComponentProps } from 'react';
 import { useAtom } from 'jotai';
 import { useSnapshot } from 'valtio';
 import { appSettings } from '@/store/1-ui-settings';
-import { dialogOptionsOpenAtom } from '@/store/2-ui-atoms';
+import { dialogOptionsOpenAtom } from '@/store/2-ui-dialog-atoms';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/shadcn/dialog';
 import { Input } from '@/components/ui/shadcn/input';
 import { Button } from '@/components/ui/shadcn/button';

@@ -1,6 +1,6 @@
 import { useEffect, type ChangeEvent } from "react";
 import { atom, useAtom } from "jotai";
-import { dialogCalculatorOpenAtom } from "@/store/2-ui-atoms";
+import { dialogCalculatorOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { errorHexToSignedDecimal, parseSignedDecimalInput, signedDecimalToErrorHex } from "@/trace-viewer-core/3-format-error-line";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { lookupErrorMessageFromBackend } from "@/wails/lookup-error-message";

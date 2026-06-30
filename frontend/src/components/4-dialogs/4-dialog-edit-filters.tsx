@@ -9,7 +9,7 @@ import { Input } from "../ui/shadcn/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/shadcn/dialog";
 import { GripVertical, Trash2, Plus, Regex, Check } from "lucide-react";
 import { appSettings, type FileFilter } from "../../store/1-ui-settings";
-import { dialogEditFiltersOpenAtom } from "../../store/2-ui-atoms";
+import { dialogEditFiltersOpenAtom } from "../../store/2-ui-dialog-atoms";
 import { filterActions } from "../../store/4-file-filters";
 import { notice } from "../ui/local-ui/7-toaster/7-toaster";
 

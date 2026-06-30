@@ -8,7 +8,7 @@ import { Checkbox } from "../ui/shadcn/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../ui/shadcn/dialog";
 import { GripVertical, Trash2, Plus, Regex } from "lucide-react";
 import { appSettings, type HighlightRule } from "../../store/1-ui-settings";
-import { dialogEditHighlightsOpenAtom } from "../../store/2-ui-atoms";
+import { dialogEditHighlightsOpenAtom } from "../../store/2-ui-dialog-atoms";
 import { highlightActions } from "../../store/5-highlight-rules";
 import { turnOffAutoComplete } from "@/utils/disable-hidden-children";
 import { notice } from "../ui/local-ui/7-toaster/7-toaster";

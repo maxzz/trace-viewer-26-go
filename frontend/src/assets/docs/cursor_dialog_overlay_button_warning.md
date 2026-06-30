@@ -5,7 +5,7 @@ _Exported on 6/19/2026 at 14:44:58 PDT from Cursor (3.8.11)_
 
 **User**
 
-DOM Path: div.data-[.tate=open]:animate-in data-[.tate=clo.ed]:animate-out data-[.tate=clo.ed]:fade-out-0 data-[.tate=open]:fade-in-0 fixed in.et-0 z-50 bg-black/5 dark:bg-black/10 backdrop-blur-[.7px]
+DOM Path: div.data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed in.et-0 z-50 bg-black/5 dark:bg-black/10 backdrop-blur-[.7px]
 Position: top=0px, left=0px, width=1121px, height=1093px
 React Component: Primitive.div
 HTML Element: <div data-state="open" data-slot="dialog-overlay" class="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-50 bg-black/5 dark:bg-black/10 backdrop-blur-[.7px]" style="pointer-events: auto;" data-aria-hidden="true" aria-hidden="true" data-cursor-element-id="cursor-el-1"></div> when click on this button the warning appears how to fix it?

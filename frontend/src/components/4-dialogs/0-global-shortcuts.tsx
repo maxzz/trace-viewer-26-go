@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { atom, useSetAtom } from "jotai";
-import { dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogOptionsOpenAtom } from "@/store/2-ui-atoms";
+import { dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogOptionsOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { quitApplication } from "@/utils/quit-app";
 

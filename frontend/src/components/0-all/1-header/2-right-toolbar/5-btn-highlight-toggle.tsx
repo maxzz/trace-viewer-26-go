@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/shadcn/button";
 import { Highlighter } from "lucide-react";
 import { IconL_ChevronDown } from "@/components/ui/icons/normal/lucid-react";
 import { appSettings } from "@/store/1-ui-settings";
-import { dialogEditHighlightsOpenAtom } from "@/store/2-ui-atoms";
+import { dialogEditHighlightsOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { highlightActions } from "@/store/5-highlight-rules";
 
 export function ButtonHighlightToggle() {

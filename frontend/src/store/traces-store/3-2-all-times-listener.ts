@@ -5,7 +5,7 @@ import { appSettings } from "../1-ui-settings";
 import { allTimesStore } from "./3-1-all-times-store";
 import { filesStore } from "./9-types-files-store";
 import { cancelAllTimesBuild } from "../../workers-client/all-times-client";
-import { dialogEditFiltersOpenAtom } from "../2-ui-atoms";
+import { dialogEditFiltersOpenAtom } from "../2-ui-dialog-atoms";
 
 export const listenerToBuildAllTimesEffectAtom = atomEffect(
     (get, set) => {

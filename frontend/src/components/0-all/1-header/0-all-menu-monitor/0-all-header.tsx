@@ -4,7 +4,7 @@ import { HistoryButtons } from "../2-right-toolbar/1-btn-nav-history";
 import { ErrorsNavControls } from "../2-right-toolbar/2-btn-nav-errors";
 import { ToggleErrorsOnly, ToggleErrorsWithoutNoise, ToggleThreadOnly } from "../2-right-toolbar/3-top-menu-toggles";
 import { FileFilterDropdown } from "../2-right-toolbar/4-btn-files-filter-as-select";
-import { LoadingProgress } from "./3-loading-progress";
+import { LoadingProgress } from "./3-0-notice-all";
 import { ButtonHighlightToggle } from "../2-right-toolbar/5-btn-highlight-toggle";
 import { ButtonThemeToggle } from "../2-right-toolbar/8-btn-theme-toggle";
 

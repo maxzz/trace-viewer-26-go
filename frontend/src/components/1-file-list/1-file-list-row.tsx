@@ -13,7 +13,7 @@ import { type FileState } from "@/store/traces-store/9-types-files-store";
 import { asyncReloadFileById } from "@/store/traces-store/8-1-load-files";
 import { selectFile, closeFile, closeOtherFiles, closeAllFiles } from "@/store/traces-store/0-2-files-actions";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
-import { dialogFileHeaderOpenAtom, dialogEditHighlightsOpenAtom } from "@/store/2-ui-atoms";
+import { dialogFileHeaderOpenAtom, dialogEditHighlightsOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { getFileLoadingAtom } from "@/store/traces-store/8-3-file-loading-atoms";
 import { highlightActions } from "@/store/5-highlight-rules";
 import { getOverlayKeyClasses } from "../ui/local-ui/color-picker-popup";
