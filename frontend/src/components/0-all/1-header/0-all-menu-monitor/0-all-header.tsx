@@ -12,7 +12,7 @@ export function HeaderRow() {
     return (
         <div className="bg-background items-center justify-between flex">
 
-            <div className="flex-1 px-2 items-center gap-4 flex">
+            <div className="flex-1 px-2 items-center gap-1 flex">
                 <TopMenu />
                 <MonitorControls />
                 <LoadingProgress />
