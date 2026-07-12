@@ -12,6 +12,11 @@ export type PathFileStat = {
     size: number;
 };
 
+export type FolderChangesResult = {
+    addedFiles: { name: string; path: string; data: number[]; }[];
+    removedPaths: string[];
+};
+
 export async function readPathsFromBackend(paths: string[]): Promise<ReadPathsResult> {
     if (!isBackendAvailable()) {
         throw new Error("Backend is not available.");
@@ -30,6 +35,14 @@ export async function statPathsFromBackend(paths: string[]): Promise<PathFileSta
     }
 
     return getBackendApp()!.StatPaths(paths) as Promise<PathFileStat[]>;
+}
+
+export async function scanFolderChangesFromBackend(dirPath: string, knownPaths: string[]): Promise<FolderChangesResult> {
+    if (!isBackendAvailable()) {
+        throw new Error("Backend is not available.");
+    }
+
+    return getBackendApp()!.ScanFolderChanges(dirPath, knownPaths) as Promise<FolderChangesResult>;
 }
 
 export async function readFileFromBackendPath(path: string): Promise<File> {

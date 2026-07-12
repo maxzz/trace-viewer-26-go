@@ -10,6 +10,8 @@ export function OpenLinkFile(arg1:Array<number>):Promise<backend.ReadPathsResult
 
 export function ReadPaths(arg1:Array<string>):Promise<backend.ReadPathsResult>;
 
+export function ScanFolderChanges(arg1:string,arg2:Array<string>):Promise<backend.FolderChangesResult>;
+
 export function SetDevToolsState(arg1:boolean):Promise<void>;
 
 export function StatPaths(arg1:Array<string>):Promise<Array<backend.PathFileStat>>;

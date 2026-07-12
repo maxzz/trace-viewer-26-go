@@ -4,7 +4,7 @@ import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 import { setFileDiskPath } from "@/workers-client";
 import { closeAllFiles } from "./0-2-files-actions";
-import { asyncLoadAnyFiles } from "./8-1-load-files";
+import { asyncLoadAnyFiles, registerMonitoredKnownPaths } from "./8-1-load-files";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
 
 export async function asyncLoadFilesFromPaths(paths: string[]) {
@@ -53,6 +53,7 @@ async function handleReadPathsResult(result: ReadPathsResult) {
         )
     );
     const filePaths = result.files.map((pathFile) => pathFile.path);
+    registerMonitoredKnownPaths(filePaths);
 
     await asyncLoadAnyFiles(files, result.droppedFolderName, filePaths);
 }

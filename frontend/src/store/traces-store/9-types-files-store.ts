@@ -13,6 +13,8 @@ export interface NewLinesMarker {
     fromLineIndex: number;          // first appended line (in TraceLine.lineIndex space).
 }
 
+export type FileListChangeHighlight = "added" | "removed";
+
 export interface FileUpdateInfo {
     status: "idle" | "updating" | "failed";
     lastLoadedSize: number;
@@ -62,6 +64,7 @@ export interface FileState {
     
     matchedFilterIds: string[];                 // Cache for FILTERS that match this file (for hiding).
     matchedHighlightIds: string[];              // Cache for HIGHLIGHT rules that match this file (for coloring).
+    listChangeHighlight: FileListChangeHighlight | null;
 }
 
 // Store
@@ -69,9 +72,11 @@ export interface FileState {
 interface FilesStore {
     quickFileData: Record<string, FileData>;    // Quick File Data accessed by ID.
     states: FileState[];                        // All files state.
+    monitoredKnownPaths: string[];              // On-disk paths tracked for folder monitoring.
 }
 
 export const filesStore = proxy<FilesStore>({
     quickFileData: {},
     states: [],
+    monitoredKnownPaths: [],
 });

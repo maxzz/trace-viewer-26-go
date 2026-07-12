@@ -1,12 +1,14 @@
 import { type FileWithHandle } from "browser-fs-access";
 import { atom, getDefaultStore } from "jotai";
 import { ref } from "valtio";
-import { extractTracesFromZipInWorker, getFileDiskPath, isTrc3File, isZipFile } from "@/workers-client";
+import { extractTracesFromZipInWorker, getFileDiskPath, isTrc3File, isZipFile, setFileDiskPath } from "@/workers-client";
 import { isBackendAvailable } from "@/wails/is-wails";
-import { readFileFromBackendPath, statPathsFromBackend } from "@/wails/read-paths";
+import { readFileFromBackendPath, scanFolderChangesFromBackend, statPathsFromBackend } from "@/wails/read-paths";
+import { pathFileDataToUint8Array } from "@/wails/path-file-data";
 import { setAppTitle } from "@/store/3-ui-app-title";
 import { notice } from "@/components/ui/local-ui/7-toaster";
-import { filesStore, type FileData, type FileSourceInfo, type FileState, type FileUpdateInfo, type NewLinesMarker } from "./9-types-files-store";
+import { showFileListChanges, getFileListChangeHighlightDurationMs } from "@/components/0-all/1-header/0-all-menu-monitor/3-2-notice-file-list-changes";
+import { filesStore, type FileData, type FileListChangeHighlight, type FileSourceInfo, type FileState, type FileUpdateInfo, type NewLinesMarker } from "./9-types-files-store";
 import { asyncParseTraceFile, type ParsedTraceData } from "./8-2-parse-trace-file";
 import { emptyFileHeader, LineCode, type TraceLine } from "@/trace-viewer-core/9-core-types";
 import { NOISE_ERROR_CODE } from "@/trace-viewer-core/3-format-error-line";
@@ -18,7 +20,7 @@ import { buildAlltimes } from "./3-2-all-times-listener";
 import { setFileLoading } from "./8-3-file-loading-atoms";
 import { recomputeHighlightMatches } from "../5-highlight-rules";
 import { allTimesStore } from "./3-1-all-times-store";
-import { selectFile } from "./0-2-files-actions";
+import { closeFile, selectFile } from "./0-2-files-actions";
 import { getCurrentFileState, setCurrentFileState, setCurrentLineIndex } from "./0-1-files-current-state";
 import { getActiveBlockLoadPatterns, shouldBlockFileLoad } from "../9-block-load-filters";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
@@ -33,6 +35,7 @@ const FILE_RELOAD_RETRY_DELAY_MS = 500;
 type FileLoadItem = {
     file: File;
     source: FileSourceInfo;
+    listChangeHighlight?: FileListChangeHighlight | null;
 };
 
 type ReloadReason = "manual" | "auto";
@@ -129,6 +132,9 @@ async function loadFilesToStore(items: FileLoadItem[]) {
     // Populate the store with new file states
     for (const item of items) {
         const newFileState = newTraceItemCreate(item.file, item.source);
+        if (item.listChangeHighlight) {
+            markFileListChangeHighlight(newFileState, item.listChangeHighlight);
+        }
         filesStore.states.push(newFileState);
         setFileLoading(newFileState.id, true);
         itemsToLoad.push({ file: item.file, fileState: newFileState });
@@ -229,7 +235,8 @@ function newTraceItemCreate(file: File, source: FileSourceInfo): FileState {
             threadBaseIndexToDisplayIndexAtom: atom<number[] | undefined>(undefined),
             threadLinesThreadIdAtom: atom<number | null>(null),
             matchedFilterIds: [],
-            matchedHighlightIds: []
+            matchedHighlightIds: [],
+            listChangeHighlight: null,
         };
     }
 }
@@ -358,7 +365,13 @@ export async function asyncMonitorTick(): Promise<void> {
         )
     );
 
-    if (!selectedId || !appSettings.fileUpdates.sizeMonitorEnabled) {
+    if (!appSettings.fileUpdates.sizeMonitorEnabled) {
+        return;
+    }
+
+    await asyncScanMonitoredFolders();
+
+    if (!selectedId) {
         return;
     }
 
@@ -800,4 +813,224 @@ function getErrorLinesCountWithoutNoise(viewLines: readonly TraceLine[]) {
         count++;
     }
     return count;
+}
+
+const listChangeHighlightTimers = new Map<string, number>();
+const pendingRemovedFileIds = new Set<string>();
+
+async function asyncScanMonitoredFolders(): Promise<void> {
+    if (!isBackendAvailable()) {
+        return;
+    }
+
+    const monitoredFolders = collectMonitoredFolders();
+    if (monitoredFolders.size === 0) {
+        return;
+    }
+
+    let totalAdded = 0;
+    let totalRemoved = 0;
+
+    for (const [dirPath, knownPaths] of monitoredFolders) {
+        try {
+            const changes = await scanFolderChangesFromBackend(dirPath, knownPaths);
+            totalAdded += await asyncApplyMonitoredFolderAddedFiles(changes.addedFiles);
+            totalRemoved += applyMonitoredFolderRemovedPaths(changes.removedPaths);
+        } catch (error) {
+            console.error("Failed to scan monitored folder", dirPath, error);
+        }
+    }
+
+    if (totalAdded > 0 || totalRemoved > 0) {
+        showFileListChanges(totalAdded, totalRemoved);
+    }
+
+    if (totalAdded > 0) {
+        appSettings.allTimes.needToRebuild = true;
+        buildAlltimes();
+    }
+}
+
+export function registerMonitoredKnownPaths(paths: string[]) {
+    const known = new Set(filesStore.monitoredKnownPaths);
+    for (const path of paths) {
+        known.add(path);
+    }
+    filesStore.monitoredKnownPaths = Array.from(known);
+}
+
+function unregisterMonitoredKnownPath(path: string) {
+    filesStore.monitoredKnownPaths = filesStore.monitoredKnownPaths.filter((item) => item !== path);
+}
+
+function collectMonitoredFolders(): Map<string, string[]> {
+    const folders = new Map<string, string[]>();
+
+    const registerPath = (filePath: string) => {
+        const dirPath = getParentDirectoryPath(filePath);
+        const knownPaths = folders.get(dirPath) ?? [];
+        if (!knownPaths.includes(filePath)) {
+            knownPaths.push(filePath);
+        }
+        folders.set(dirPath, knownPaths);
+    };
+
+    for (const filePath of filesStore.monitoredKnownPaths) {
+        registerPath(filePath);
+    }
+
+    for (const fileState of filesStore.states) {
+        if (fileState.source.kind !== "path") {
+            continue;
+        }
+
+        registerPath(fileState.source.path);
+    }
+
+    return folders;
+}
+
+function getParentDirectoryPath(filePath: string): string {
+    const normalized = filePath.replace(/\\/g, "/");
+    const lastSlash = normalized.lastIndexOf("/");
+    if (lastSlash <= 0) {
+        return filePath;
+    }
+
+    return filePath.slice(0, filePath.length - (normalized.length - lastSlash));
+}
+
+async function asyncApplyMonitoredFolderAddedFiles(
+    addedFiles: { name: string; path: string; data: number[]; }[]
+): Promise<number> {
+    if (addedFiles.length === 0) {
+        return 0;
+    }
+
+    const blockPatterns = getActiveBlockLoadPatterns();
+    const itemsToLoad: FileLoadItem[] = [];
+
+    for (const pathFile of addedFiles) {
+        registerMonitoredKnownPaths([pathFile.path]);
+        const bytes = pathFileDataToUint8Array(pathFile.data);
+        const copy = new Uint8Array(bytes.byteLength);
+        copy.set(bytes);
+        const file = setFileDiskPath(new File([copy.buffer], pathFile.name), pathFile.path);
+
+        if (isZipFile(file)) {
+            const result = await extractTracesFromZipInWorker(file, blockPatterns);
+            for (const zipEntry of result.files) {
+                itemsToLoad.push({
+                    file: zipEntry,
+                    source: { kind: "zip", zipFileName: result.zipFileName },
+                    listChangeHighlight: "added",
+                });
+            }
+            continue;
+        }
+
+        if (!isTrc3File(file) || shouldBlockFileLoad(file.name)) {
+            continue;
+        }
+
+        itemsToLoad.push({
+            file,
+            source: { kind: "path", path: pathFile.path },
+            listChangeHighlight: "added",
+        });
+    }
+
+    if (itemsToLoad.length === 0) {
+        return 0;
+    }
+
+    await loadFilesToStore(itemsToLoad);
+    return itemsToLoad.length;
+}
+
+function applyMonitoredFolderRemovedPaths(removedPaths: string[]): number {
+    if (removedPaths.length === 0) {
+        return 0;
+    }
+
+    const removedPathSet = new Set(removedPaths);
+    const removedZipNames = new Set(
+        removedPaths
+            .filter((path) => path.toLowerCase().endsWith(".zip"))
+            .map((path) => getPathBaseName(path))
+    );
+    let removedCount = 0;
+
+    for (const fileState of filesStore.states) {
+        const pathSource = fileState.source.kind === "path" ? fileState.source.path : null;
+        const zipSource = fileState.source.kind === "zip" && removedZipNames.has(fileState.source.zipFileName);
+
+        if (!pathSource && !zipSource) {
+            continue;
+        }
+
+        if (pathSource && !removedPathSet.has(pathSource)) {
+            continue;
+        }
+
+        if (pendingRemovedFileIds.has(fileState.id)) {
+            continue;
+        }
+
+        pendingRemovedFileIds.add(fileState.id);
+        markFileListChangeHighlight(fileState, "removed");
+        scheduleRemovedFileClose(fileState.id);
+        if (pathSource) {
+            unregisterMonitoredKnownPath(pathSource);
+        }
+        removedCount++;
+    }
+
+    for (const path of removedPaths) {
+        unregisterMonitoredKnownPath(path);
+    }
+
+    return removedCount;
+}
+
+function getPathBaseName(filePath: string): string {
+    const normalized = filePath.replace(/\\/g, "/");
+    const lastSlash = normalized.lastIndexOf("/");
+    return lastSlash < 0 ? filePath : normalized.slice(lastSlash + 1);
+}
+
+function markFileListChangeHighlight(fileState: FileState, highlight: FileListChangeHighlight) {
+    fileState.listChangeHighlight = highlight;
+
+    const existing = listChangeHighlightTimers.get(fileState.id);
+    if (existing !== undefined) {
+        window.clearTimeout(existing);
+    }
+
+    const timerId = window.setTimeout(
+        () => {
+            listChangeHighlightTimers.delete(fileState.id);
+            if (fileState.listChangeHighlight === highlight) {
+                fileState.listChangeHighlight = null;
+            }
+        },
+        getFileListChangeHighlightDurationMs()
+    );
+
+    listChangeHighlightTimers.set(fileState.id, timerId);
+}
+
+function scheduleRemovedFileClose(fileId: string) {
+    window.setTimeout(
+        () => {
+            pendingRemovedFileIds.delete(fileId);
+            const fileState = filesStore.states.find((item) => item.id === fileId);
+            if (!fileState || fileState.listChangeHighlight !== "removed") {
+                return;
+            }
+
+            closeFile(fileId);
+        },
+        getFileListChangeHighlightDurationMs()
+    );
 }

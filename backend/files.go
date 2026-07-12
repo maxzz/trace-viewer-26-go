@@ -23,6 +23,11 @@ type PathFileStat struct {
 	Size int64  `json:"size"`
 }
 
+type FolderChangesResult struct {
+	AddedFiles   []PathFile `json:"addedFiles"`
+	RemovedPaths []string   `json:"removedPaths"`
+}
+
 func ParseLaunchPaths(args []string) []string {
 	paths := make([]string, 0, len(args))
 	for _, arg := range args {
@@ -90,6 +95,68 @@ func ReadPathsFromDisk(paths []string) (ReadPathsResult, error) {
 
 func (a *App) ReadPaths(paths []string) (ReadPathsResult, error) {
 	return ReadPathsFromDisk(paths)
+}
+
+func (a *App) ScanFolderChanges(dirPath string, knownPaths []string) (FolderChangesResult, error) {
+	return ScanFolderChangesFromDisk(dirPath, knownPaths)
+}
+
+func ScanFolderChangesFromDisk(dirPath string, knownPaths []string) (FolderChangesResult, error) {
+	result := FolderChangesResult{}
+
+	info, err := os.Stat(dirPath)
+	if err != nil {
+		return result, err
+	}
+	if !info.IsDir() {
+		return result, nil
+	}
+
+	entries, err := os.ReadDir(dirPath)
+	if err != nil {
+		return result, err
+	}
+
+	known := make(map[string]struct{}, len(knownPaths))
+	for _, path := range knownPaths {
+		known[filepath.Clean(path)] = struct{}{}
+	}
+
+	onDisk := make(map[string]struct{})
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		if !isOurFileName(entry.Name()) {
+			continue
+		}
+
+		fullPath := filepath.Clean(filepath.Join(dirPath, entry.Name()))
+		onDisk[fullPath] = struct{}{}
+
+		if _, exists := known[fullPath]; exists {
+			continue
+		}
+
+		data, err := os.ReadFile(fullPath)
+		if err != nil {
+			return result, err
+		}
+
+		result.AddedFiles = append(result.AddedFiles, PathFile{
+			Name: entry.Name(),
+			Path: fullPath,
+			Data: data,
+		})
+	}
+
+	for path := range known {
+		if _, exists := onDisk[path]; !exists {
+			result.RemovedPaths = append(result.RemovedPaths, path)
+		}
+	}
+
+	return result, nil
 }
 
 func (a *App) StatPaths(paths []string) ([]PathFileStat, error) {

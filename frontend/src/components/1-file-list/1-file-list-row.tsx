@@ -51,7 +51,7 @@ export const FileListRow = memo(
         return (
             <ContextMenu>
                 <ContextMenuTrigger asChild>
-                    <div className={cn(getRowClasses(isSelected, hasError))} onClick={() => selectFile(fileState.id)}>
+                    <div className={cn(getRowClasses(isSelected, hasError, fileState.listChangeHighlight))} onClick={() => selectFile(fileState.id)}>
 
                         {/* Highlight rule background overlay */}
                         {!isSelected && overlayClasses && (
@@ -160,13 +160,15 @@ export const FileListRow = memo(
     }
 );
 
-function getRowClasses(isSelected: boolean, hasError: boolean) {
+function getRowClasses(isSelected: boolean, hasError: boolean, listChangeHighlight: FileState["listChangeHighlight"]) {
     return cn(
         "group relative px-2 py-0.5 text-xs cursor-default select-none flex items-center gap-1.5",
         isSelected
             ? localClasses.rowSelected
             : "text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10 border-transparent",
         hasError && "text-red-600 dark:text-red-400",
+        listChangeHighlight === "added" && "bg-green-500/20",
+        listChangeHighlight === "removed" && "bg-red-500/20",
     );
 }
 

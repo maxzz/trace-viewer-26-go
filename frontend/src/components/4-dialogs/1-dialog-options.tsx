@@ -107,6 +107,15 @@ export function DialogOptions() {
                         step={256}
                         type="number"
                     />
+
+                    <OptionRowInput
+                        label="Added/removed file highlight duration (ms)"
+                        value={fileUpdates.fileListChangeHighlightDurationMs}
+                        onChange={handleFileListChangeHighlightDurationChange}
+                        min={100}
+                        step={100}
+                        type="number"
+                    />
                 </div>
 
                 <DialogFooter className="justify-center!">
@@ -219,5 +228,14 @@ function handleAutoUpdateMinSizeChangeChange(e: ChangeEvent<HTMLInputElement>) {
         appSettings.fileUpdates.autoUpdateMinSizeChangeBytes = val;
     } else {
         notice.info('The minimum size change before auto update must be at least 0 bytes');
+    }
+}
+
+function handleFileListChangeHighlightDurationChange(e: ChangeEvent<HTMLInputElement>) {
+    const val = parseInt(e.target.value, 10);
+    if (!isNaN(val) && val >= 100) {
+        appSettings.fileUpdates.fileListChangeHighlightDurationMs = val;
+    } else {
+        notice.info('The added/removed file highlight duration must be at least 100ms');
     }
 }

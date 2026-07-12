@@ -59,6 +59,7 @@ export interface AppSettings {
         showFailureNotice: boolean;
         autoUpdateIntervalMs: number;
         autoUpdateMinSizeChangeBytes: number;
+        fileListChangeHighlightDurationMs: number;
     };
 
     // All Times
@@ -93,6 +94,7 @@ const DEFAULT_SETTINGS: AppSettings = {
         showFailureNotice: true,
         autoUpdateIntervalMs: 5000,
         autoUpdateMinSizeChangeBytes: 1024,
+        fileListChangeHighlightDurationMs: 1000,
     },
     allTimes: {
         show: false,

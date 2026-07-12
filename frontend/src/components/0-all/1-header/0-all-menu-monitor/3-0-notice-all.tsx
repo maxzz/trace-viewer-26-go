@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/shadcn/button";
 import { IconStopCircle, SymbolInfo } from "@/components/ui/icons";
 import { timelineBuildNoticeStore } from "./3-1-notice-timeline-state";
+import { fileListChangeNoticeStore } from "./3-2-notice-file-list-changes";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
 import { isLoadingFilesAtom } from "@/store/traces-store/8-1-load-files";
 import { dialogTimelineCancelOpenAtom } from "@/store/2-ui-dialog-atoms";
@@ -16,6 +17,7 @@ export function LoadingProgress() {
         <motion.div layout className="flex items-center gap-1">
             <ParsingFilesProgress />
             <TimelineBuildProgress />
+            <FileListChangeNotice />
             <TimelineBuildNotice />
         </motion.div>
     );
@@ -45,6 +47,25 @@ function TimelineBuildProgress() {
                 Building timeline...
             </Button>
         </AnimatedNotice>
+    );
+}
+
+function FileListChangeNotice() {
+    const { addedCount, removedCount } = useSnapshot(fileListChangeNoticeStore);
+
+    return (
+        <>
+            <AnimatedNotice show={addedCount > 0}>
+                <Button className="px-2 h-6 text-xs text-green-600 bg-green-300/10 border border-green-500/50 opacity-100! rounded" variant="ghost" size="sm" disabled>
+                    +{addedCount}
+                </Button>
+            </AnimatedNotice>
+            <AnimatedNotice show={removedCount > 0}>
+                <Button className="px-2 h-6 text-xs text-red-500 bg-red-300/10 border border-red-500/30 opacity-100! rounded" variant="ghost" size="sm" disabled>
+                    -{removedCount}
+                </Button>
+            </AnimatedNotice>
+        </>
     );
 }
 

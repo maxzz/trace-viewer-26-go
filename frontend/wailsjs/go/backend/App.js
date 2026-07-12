@@ -18,6 +18,10 @@ export function ReadPaths(arg1) {
   return window['go']['backend']['App']['ReadPaths'](arg1);
 }
 
+export function ScanFolderChanges(arg1, arg2) {
+  return window['go']['backend']['App']['ScanFolderChanges'](arg1, arg2);
+}
+
 export function SetDevToolsState(arg1) {
   return window['go']['backend']['App']['SetDevToolsState'](arg1);
 }
