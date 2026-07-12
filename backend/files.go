@@ -124,11 +124,27 @@ func collectPathsFromEntry(path string) (filePaths []string, droppedFolderName s
 	}
 
 	name := filepath.Base(path)
+	if isLinkFileName(name) {
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return nil, "", "", readErr
+		}
+		target, resolveErr := resolveShortcutTarget(data)
+		if resolveErr != nil {
+			return nil, "", "", resolveErr
+		}
+		return collectPathsFromEntry(target)
+	}
+
 	if isOurFileName(name) {
 		return []string{path}, "", "", nil
 	}
 
 	return nil, "", name, nil
+}
+
+func isLinkFileName(name string) bool {
+	return strings.HasSuffix(strings.ToLower(name), ".lnk")
 }
 
 func isOurFileName(name string) bool {

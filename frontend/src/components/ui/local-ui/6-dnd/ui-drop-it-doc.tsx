@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { type PrimitiveAtom, useAtomValue, useSetAtom, atom } from "jotai";
 import { type DoSetFilesFrom_Dnd_Atom } from "./8-dnd-atoms";
-// import { isWailsRuntime } from "@/wails/is-wails";
-// import { asyncLoadFilesFromPaths } from "@/store/traces-store/8-0-load-files-from-paths";
-// import { OnFileDrop, OnFileDropOff } from "../../../../../wailsjs/runtime/runtime";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { asyncLoadFilesFromPaths } from "@/store/traces-store/8-0-load-files-from-paths";
+import { OnFileDrop, OnFileDropOff } from "../../../../../wailsjs/runtime/runtime";
 
 export function DropItDoc({ doSetFilesFromDropAtom }: { doSetFilesFromDropAtom: DoSetFilesFrom_Dnd_Atom; }) {
     const [activeAtom] = useState(() => atom(false));
     const active = useAtomValue(activeAtom);
-    useDragHandlers({ doSetFilesFromDropAtom, activeAtom, });
-    // useWailsNativeDropHandlers(activeAtom);
+    const backendAvailable = isBackendAvailable();
+    useDragHandlers({ doSetFilesFromDropAtom, activeAtom, skipDropProcessing: backendAvailable });
+    useWailsNativeDropHandlers(activeAtom, backendAvailable);
     return (<>
         {active && (
             <div className={`fixed inset-0 grid place-items-center text-5xl font-bold text-slate-50 bg-slate-800/90 z-99`}>
@@ -19,7 +20,7 @@ export function DropItDoc({ doSetFilesFromDropAtom }: { doSetFilesFromDropAtom: 
     </>);
 }
 
-export function useDragHandlers({ doSetFilesFromDropAtom, activeAtom }: DragHandlersProps) {
+export function useDragHandlers({ doSetFilesFromDropAtom, activeAtom, skipDropProcessing }: DragHandlersProps) {
     const droppedFiles = useSetAtom(doSetFilesFromDropAtom);
     const setDropActive = useSetAtom(activeAtom);
     const activeListenersRef = useRef(0);
@@ -46,9 +47,9 @@ export function useDragHandlers({ doSetFilesFromDropAtom, activeAtom }: DragHand
                 event.preventDefault();
                 activeListenersRef.current = 0;
                 setDropActive(false);
-                // if (isWailsRuntime()) {
-                //     return;
-                // }
+                if (skipDropProcessing) {
+                    return;
+                }
                 event.dataTransfer && droppedFiles(event.dataTransfer);
             }
 
@@ -64,36 +65,17 @@ export function useDragHandlers({ doSetFilesFromDropAtom, activeAtom }: DragHand
             return () => {
                 controller.abort();
             };
-        }, []
+        }, [droppedFiles, setDropActive, skipDropProcessing]
     );
 }
 
-export type DragHandlersProps = {
-    doSetFilesFromDropAtom: DoSetFilesFrom_Dnd_Atom;
-    activeAtom: PrimitiveAtom<boolean>;
-};
-
-/*
-// Important: Don't use this approach and don't uncomment this code, it's not what we need.
-function useWailsNativeDropHandlers(activeAtom: PrimitiveAtom<boolean>) {
+function useWailsNativeDropHandlers(activeAtom: PrimitiveAtom<boolean>, enabled: boolean) {
     const setDropActive = useSetAtom(activeAtom);
 
     useEffect(
         () => {
-            // if (!isWailsRuntime()) {
-            //     return;
-            // }
-
-            function onDragEnter() {
-                setDropActive(true);
-            }
-
-            function onDragOver(event: DragEvent) {
-                event.preventDefault();
-            }
-
-            function onDragLeave() {
-                setDropActive(false);
+            if (!enabled) {
+                return;
             }
 
             OnFileDrop((_x, _y, paths) => {
@@ -101,20 +83,16 @@ function useWailsNativeDropHandlers(activeAtom: PrimitiveAtom<boolean>) {
                 void asyncLoadFilesFromPaths(paths);
             }, false);
 
-            const controller = new AbortController();
-            const signal = { signal: controller.signal };
-
-            const a = document.addEventListener;
-            a("dragenter", onDragEnter, signal);
-            a("dragover", onDragOver, signal);
-            a("dragleave", onDragLeave, signal);
-
             return () => {
-                controller.abort();
                 OnFileDropOff();
             };
         },
-        [setDropActive]
+        [enabled, setDropActive]
     );
 }
-*/
+
+export type DragHandlersProps = {
+    doSetFilesFromDropAtom: DoSetFilesFrom_Dnd_Atom;
+    activeAtom: PrimitiveAtom<boolean>;
+    skipDropProcessing: boolean;
+};

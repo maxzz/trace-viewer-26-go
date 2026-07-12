@@ -4,10 +4,12 @@ import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, Me
 import { currentFileStateAtom } from "@/store/traces-store/0-1-files-current-state";
 import { closeAllFiles, closeFile, closeOtherFiles } from "@/store/traces-store/0-2-files-actions";
 import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
+import { asyncOpenFolderViaBackend } from "@/store/traces-store/8-0-load-files-from-paths";
 import { filesCountAtom } from "@/store/6-filtered-files";
 import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom } from "@/store/2-ui-dialog-atoms";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { quitApplication } from "@/utils/quit-app";
+import { isFolderAccessRestrictedError } from "@/utils/folder-access-error";
 import { notice } from "../../../ui/local-ui/7-toaster";
 
 export function TopMenu() {
@@ -181,6 +183,11 @@ const openTraceFilesAtom = atom(
 const openTraceFolderAtom = atom(
     null,
     async () => {
+        if (isBackendAvailable()) {
+            await asyncOpenFolderViaBackend();
+            return;
+        }
+
         if (!ensureChromiumFileAccess()) return;
 
         try {
@@ -196,6 +203,10 @@ const openTraceFolderAtom = atom(
             void asyncLoadAnyFiles(files);
         } catch (error) {
             if (isAbortError(error)) return;
+            if (isFolderAccessRestrictedError(error)) {
+                notice.info("This application cannot open that folder.");
+                return;
+            }
             console.error('Failed to open folder', error);
             notice.error('Failed to open folder.');
         }

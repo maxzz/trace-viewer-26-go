@@ -1,4 +1,4 @@
-import { type ReadPathsResult, openLinkFileFromBackend, readPathsFromBackend } from "@/wails/read-paths";
+import { type ReadPathsResult, openFolderFromBackend, openLinkFileFromBackend, readPathsFromBackend } from "@/wails/read-paths";
 import { pathFileDataToUint8Array } from "@/wails/path-file-data";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
@@ -29,6 +29,17 @@ export async function asyncOpenLinkFile(file: File) {
 
     const bytes = new Uint8Array(await file.arrayBuffer());
     const result = await openLinkFileFromBackend(uint8ArrayToBase64(bytes));
+    await handleReadPathsResult(result);
+}
+
+// Opens a folder through the native Go dialog and load pipeline. Avoids the
+// browser folder picker, which cannot access folders containing system files.
+export async function asyncOpenFolderViaBackend() {
+    if (!isBackendAvailable()) {
+        return;
+    }
+
+    const result = await openFolderFromBackend();
     await handleReadPathsResult(result);
 }
 

@@ -98,3 +98,24 @@ func (a *App) Greet(name string) string {
 func (a *App) LookupErrorMessage(code string) string {
 	return lookupErrorMessage(code)
 }
+
+// OpenFolder shows a native folder picker and loads supported trace files from the
+// selected directory. Used by the desktop app instead of the browser File System
+// Access API, which cannot open folders that contain system files.
+func (a *App) OpenFolder() (ReadPathsResult, error) {
+	if a.ctx == nil {
+		return ReadPathsResult{}, fmt.Errorf("application is not ready")
+	}
+
+	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Open Folder",
+	})
+	if err != nil {
+		return ReadPathsResult{}, err
+	}
+	if path == "" {
+		return ReadPathsResult{}, nil
+	}
+
+	return ReadPathsFromDisk([]string{path})
+}

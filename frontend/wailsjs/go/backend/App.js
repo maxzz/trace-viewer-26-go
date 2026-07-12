@@ -10,8 +10,16 @@ export function LookupErrorMessage(arg1) {
   return window['go']['backend']['App']['LookupErrorMessage'](arg1);
 }
 
+export function OpenFolder() {
+  return window['go']['backend']['App']['OpenFolder']();
+}
+
 export function OpenLinkFile(arg1) {
   return window['go']['backend']['App']['OpenLinkFile'](arg1);
+}
+
+export function OpenFolder() {
+  return window['go']['backend']['App']['OpenFolder']();
 }
 
 export function ReadPaths(arg1) {

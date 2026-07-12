@@ -6,6 +6,7 @@ import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
 import { asyncOpenLinkFile } from "@/store/traces-store/8-0-load-files-from-paths";
 import { setFileLoadSummary } from "@/store/traces-store/8-4-file-load-summary";
 import { isBackendAvailable } from "@/wails/is-wails";
+import { isFolderAccessRestrictedError } from "@/utils/folder-access-error";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 
 export type DoSetFilesFrom_Dnd_Atom = typeof doSetFilesFrom_Dnd_Atom;
@@ -158,6 +159,10 @@ export const doSetFilesFrom_Dnd_Atom = atom(                    // used by DropI
         } catch (e) {
             console.error("Failed to process dropped files", e);
             if (hasAnyFileDrop) {
+                if (!isBackendAvailable() && isFolderAccessRestrictedError(e)) {
+                    notice.info("This application cannot open that folder.");
+                    return;
+                }
                 const sourceName = droppedFolderName || dataTransfer.files?.[0]?.name || "drop";
                 notice.info(`Failed to read dropped items from "${sourceName}".`);
             }

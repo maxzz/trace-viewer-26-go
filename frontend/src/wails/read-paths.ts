@@ -23,3 +23,11 @@ export async function openLinkFileFromBackend(lnkBase64: string): Promise<ReadPa
 
     return getBackendApp()!.OpenLinkFile(lnkBase64) as Promise<ReadPathsResult>;
 }
+
+export async function openFolderFromBackend(): Promise<ReadPathsResult> {
+    if (!isBackendAvailable()) {
+        throw new Error("Backend is not available.");
+    }
+
+    return getBackendApp()!.OpenFolder() as Promise<ReadPathsResult>;
+}
