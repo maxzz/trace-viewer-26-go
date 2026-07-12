@@ -4,9 +4,11 @@ import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, Me
 import { currentFileStateAtom } from "@/store/traces-store/0-1-files-current-state";
 import { closeAllFiles, closeFile, closeOtherFiles } from "@/store/traces-store/0-2-files-actions";
 import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
+import { asyncLoadFilesFromPaths } from "@/store/traces-store/8-0-load-files-from-paths";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { pickFolderFromBackend } from "@/wails/pick-folder";
 import { filesCountAtom } from "@/store/6-filtered-files";
 import { dialogFileHeaderOpenAtom, dialogAboutOpenAtom, dialogOptionsOpenAtom, dialogEditFiltersOpenAtom, dialogEditHighlightsOpenAtom, dialogBlockLoadFiltersOpenAtom, dialogCalculatorOpenAtom } from "@/store/2-ui-dialog-atoms";
-import { isBackendAvailable } from "@/wails/is-wails";
 import { quitApplication } from "@/utils/quit-app";
 import { notice } from "../../../ui/local-ui/7-toaster";
 
@@ -181,6 +183,22 @@ const openTraceFilesAtom = atom(
 const openTraceFolderAtom = atom(
     null,
     async () => {
+        if (isBackendAvailable()) {
+            try {
+                const dirPath = await pickFolderFromBackend();
+                if (!dirPath) {
+                    return;
+                }
+
+                await asyncLoadFilesFromPaths([dirPath]);
+            } catch (error) {
+                if (isAbortError(error)) return;
+                console.error('Failed to open folder', error);
+                notice.error('Failed to open folder.');
+            }
+            return;
+        }
+
         if (!ensureChromiumFileAccess()) return;
 
         try {

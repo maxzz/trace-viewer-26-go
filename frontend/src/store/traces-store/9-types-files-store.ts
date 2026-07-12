@@ -73,10 +73,12 @@ interface FilesStore {
     quickFileData: Record<string, FileData>;    // Quick File Data accessed by ID.
     states: FileState[];                        // All files state.
     monitoredKnownPaths: string[];              // On-disk paths tracked for folder monitoring.
+    monitoredDirectories: string[];             // On-disk folders tracked for folder monitoring.
 }
 
 export const filesStore = proxy<FilesStore>({
     quickFileData: {},
     states: [],
     monitoredKnownPaths: [],
+    monitoredDirectories: [],
 });

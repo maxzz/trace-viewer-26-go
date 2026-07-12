@@ -87,6 +87,7 @@ export function closeAllFiles() {
     filesStore.states.splice(0, filesStore.states.length);
     filesStore.quickFileData = {};
     filesStore.monitoredKnownPaths = [];
+    filesStore.monitoredDirectories = [];
     resetAppTitle();
     selectFile(null);
 }

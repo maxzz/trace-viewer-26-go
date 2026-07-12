@@ -7,8 +7,6 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
-
-// App struct
 type App struct {
 	ctx                context.Context
 	windowBoundsCancel context.CancelFunc
@@ -97,4 +95,14 @@ func (a *App) Greet(name string) string {
 // LookupErrorMessage resolves a Win32/HRESULT code to a system message via FormatMessageW.
 func (a *App) LookupErrorMessage(code string) string {
 	return lookupErrorMessage(code)
+}
+
+func (a *App) PickFolder() (string, error) {
+	if a.ctx == nil {
+		return "", fmt.Errorf("application context is not ready")
+	}
+
+	return runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select trace folder",
+	})
 }

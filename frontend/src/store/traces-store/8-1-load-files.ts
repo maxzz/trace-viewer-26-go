@@ -859,6 +859,16 @@ export function registerMonitoredKnownPaths(paths: string[]) {
     filesStore.monitoredKnownPaths = Array.from(known);
 }
 
+export function registerMonitoredDirectories(directories: string[]) {
+    const dirs = new Set(filesStore.monitoredDirectories);
+    for (const directory of directories) {
+        if (directory) {
+            dirs.add(directory);
+        }
+    }
+    filesStore.monitoredDirectories = Array.from(dirs);
+}
+
 function unregisterMonitoredKnownPath(path: string) {
     filesStore.monitoredKnownPaths = filesStore.monitoredKnownPaths.filter((item) => item !== path);
 }
@@ -887,6 +897,12 @@ function collectMonitoredFolders(): Map<string, string[]> {
         registerPath(fileState.source.path);
     }
 
+    for (const dirPath of filesStore.monitoredDirectories) {
+        if (!folders.has(dirPath)) {
+            folders.set(dirPath, []);
+        }
+    }
+
     return folders;
 }
 
@@ -912,6 +928,7 @@ async function asyncApplyMonitoredFolderAddedFiles(
 
     for (const pathFile of addedFiles) {
         registerMonitoredKnownPaths([pathFile.path]);
+        registerMonitoredDirectories([getParentDirectoryPath(pathFile.path)]);
         const bytes = pathFileDataToUint8Array(pathFile.data);
         const copy = new Uint8Array(bytes.byteLength);
         copy.set(bytes);

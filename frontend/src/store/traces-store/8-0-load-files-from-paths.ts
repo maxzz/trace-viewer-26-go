@@ -4,7 +4,7 @@ import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 import { setFileDiskPath } from "@/workers-client";
 import { closeAllFiles } from "./0-2-files-actions";
-import { asyncLoadAnyFiles, registerMonitoredKnownPaths } from "./8-1-load-files";
+import { asyncLoadAnyFiles, registerMonitoredDirectories, registerMonitoredKnownPaths } from "./8-1-load-files";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
 
 export async function asyncLoadFilesFromPaths(paths: string[]) {
@@ -54,8 +54,21 @@ async function handleReadPathsResult(result: ReadPathsResult) {
     );
     const filePaths = result.files.map((pathFile) => pathFile.path);
     registerMonitoredKnownPaths(filePaths);
+    if (result.droppedFolderName && filePaths.length > 0) {
+        registerMonitoredDirectories([getParentDirectoryPath(filePaths[0])]);
+    }
 
     await asyncLoadAnyFiles(files, result.droppedFolderName, filePaths);
+}
+
+function getParentDirectoryPath(filePath: string): string {
+    const normalized = filePath.replace(/\\/g, "/");
+    const lastSlash = normalized.lastIndexOf("/");
+    if (lastSlash <= 0) {
+        return filePath;
+    }
+
+    return filePath.slice(0, filePath.length - (normalized.length - lastSlash));
 }
 
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {

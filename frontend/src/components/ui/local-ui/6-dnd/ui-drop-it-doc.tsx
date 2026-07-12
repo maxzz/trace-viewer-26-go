@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type PrimitiveAtom, useAtomValue, useSetAtom, atom } from "jotai";
 import { type DoSetFilesFrom_Dnd_Atom } from "./8-dnd-atoms";
-// import { isWailsRuntime } from "@/wails/is-wails";
-// import { asyncLoadFilesFromPaths } from "@/store/traces-store/8-0-load-files-from-paths";
-// import { OnFileDrop, OnFileDropOff } from "../../../../../wailsjs/runtime/runtime";
+import { isBackendAvailable } from "@/wails/is-wails";
 
 export function DropItDoc({ doSetFilesFromDropAtom }: { doSetFilesFromDropAtom: DoSetFilesFrom_Dnd_Atom; }) {
     const [activeAtom] = useState(() => atom(false));
@@ -46,9 +44,9 @@ export function useDragHandlers({ doSetFilesFromDropAtom, activeAtom }: DragHand
                 event.preventDefault();
                 activeListenersRef.current = 0;
                 setDropActive(false);
-                // if (isWailsRuntime()) {
-                //     return;
-                // }
+                if (isBackendAvailable()) {
+                    return;
+                }
                 event.dataTransfer && droppedFiles(event.dataTransfer);
             }
 

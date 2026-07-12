@@ -14,6 +14,10 @@ export function OpenLinkFile(arg1) {
   return window['go']['backend']['App']['OpenLinkFile'](arg1);
 }
 
+export function PickFolder() {
+  return window['go']['backend']['App']['PickFolder']();
+}
+
 export function ReadPaths(arg1) {
   return window['go']['backend']['App']['ReadPaths'](arg1);
 }
