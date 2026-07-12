@@ -3,6 +3,7 @@ import { type TraceLine, type TraceHeader } from "../../trace-viewer-core/9-core
 
 export type FileSourceInfo =
     | { kind: "handle"; handle: FileSystemFileHandle; }
+    | { kind: "path"; path: string; }
     | { kind: "zip"; zipFileName: string; }
     | { kind: "transient"; };
 

@@ -2,6 +2,7 @@ import { type ReadPathsResult, openLinkFileFromBackend, readPathsFromBackend } f
 import { pathFileDataToUint8Array } from "@/wails/path-file-data";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
+import { setFileDiskPath } from "@/workers-client";
 import { closeAllFiles } from "./0-2-files-actions";
 import { asyncLoadAnyFiles } from "./8-1-load-files";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
@@ -46,7 +47,10 @@ async function handleReadPathsResult(result: ReadPathsResult) {
     closeAllFiles();
 
     const files = result.files.map(
-        (pathFile) => new File([toArrayBuffer(pathFileDataToUint8Array(pathFile.data))], pathFile.name)
+        (pathFile) => setFileDiskPath(
+            new File([toArrayBuffer(pathFileDataToUint8Array(pathFile.data))], pathFile.name),
+            pathFile.path
+        )
     );
     const filePaths = result.files.map((pathFile) => pathFile.path);
 

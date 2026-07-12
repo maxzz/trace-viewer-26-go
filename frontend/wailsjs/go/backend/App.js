@@ -22,6 +22,10 @@ export function SetDevToolsState(arg1) {
   return window['go']['backend']['App']['SetDevToolsState'](arg1);
 }
 
+export function StatPaths(arg1) {
+  return window['go']['backend']['App']['StatPaths'](arg1);
+}
+
 export function ToggleDevTools() {
   return window['go']['backend']['App']['ToggleDevTools']();
 }

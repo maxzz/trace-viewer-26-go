@@ -1,6 +1,7 @@
 type BackendApp = {
     Greet: (name: string) => Promise<string>;
     ReadPaths: (paths: string[]) => Promise<unknown>;
+    StatPaths: (paths: string[]) => Promise<unknown>;
     OpenLinkFile: (lnkData: string) => Promise<unknown>;
     LookupErrorMessage: (code: string) => Promise<string>;
     SetDevToolsState: (open: boolean) => Promise<void>;

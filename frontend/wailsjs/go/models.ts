@@ -16,6 +16,20 @@ export namespace backend {
 	        this.data = source["data"];
 	    }
 	}
+	export class PathFileStat {
+	    path: string;
+	    size: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PathFileStat(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.path = source["path"];
+	        this.size = source["size"];
+	    }
+	}
 	export class ReadPathsResult {
 	    files: PathFile[];
 	    droppedFolderName?: string;

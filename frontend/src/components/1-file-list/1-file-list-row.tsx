@@ -10,7 +10,7 @@ import { SymbolQuestion, SymbolWarning } from "@/components/ui/icons";
 import { SymbolArrowCircleLeft } from "../ui/icons/symbols/all-other/33-arrow-circle-left";
 import { SymbolSpinner } from "../ui/icons/symbols";
 import { type FileState } from "@/store/traces-store/9-types-files-store";
-import { asyncReloadFileById } from "@/store/traces-store/8-1-load-files";
+import { asyncReloadFileById, isReloadableSource } from "@/store/traces-store/8-1-load-files";
 import { selectFile, closeFile, closeOtherFiles, closeAllFiles } from "@/store/traces-store/0-2-files-actions";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
 import { dialogFileHeaderOpenAtom, dialogEditHighlightsOpenAtom } from "@/store/2-ui-dialog-atoms";
@@ -42,7 +42,7 @@ export const FileListRow = memo(
         const showSizeChangeWarning = fileUpdates.sizeMonitorEnabled && fileState.updateInfo.hasUnreloadedSizeChange;
         const { totalAddedBytes, recentAddedBytes } = fileState.updateInfo;
         const showByteCounters = fileUpdates.sizeMonitorEnabled && (totalAddedBytes > 0 || recentAddedBytes > 0);
-        const canReload = fileState.source.kind === "handle";
+        const canReload = isReloadableSource(fileState.source);
 
         const isMarked = allTimesSelectedTimestamp
             ? allTimes.find((t) => t.timestamp === allTimesSelectedTimestamp)?.fileIds.includes(fileState.id)

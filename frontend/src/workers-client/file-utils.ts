@@ -2,6 +2,20 @@ export function isTrc3File(file: File): boolean {
     return file.name.toLowerCase().endsWith('.trc3');
 }
 
+export type FileWithDiskPath = File & {
+    diskPath?: string;
+};
+
+export function getFileDiskPath(file: File): string | undefined {
+    return (file as FileWithDiskPath).diskPath;
+}
+
+export function setFileDiskPath(file: File, diskPath: string): FileWithDiskPath {
+    const fileWithDiskPath = file as FileWithDiskPath;
+    fileWithDiskPath.diskPath = diskPath;
+    return fileWithDiskPath;
+}
+
 export function isZipFile(file: File): boolean {
     return file.name.toLowerCase().endsWith('.zip') ||
         file.type === 'application/zip' ||

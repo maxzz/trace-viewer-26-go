@@ -18,6 +18,11 @@ type ReadPathsResult struct {
 	UnsupportedFile   string     `json:"unsupportedFile,omitempty"`
 }
 
+type PathFileStat struct {
+	Path string `json:"path"`
+	Size int64  `json:"size"`
+}
+
 func ParseLaunchPaths(args []string) []string {
 	paths := make([]string, 0, len(args))
 	for _, arg := range args {
@@ -85,6 +90,23 @@ func ReadPathsFromDisk(paths []string) (ReadPathsResult, error) {
 
 func (a *App) ReadPaths(paths []string) (ReadPathsResult, error) {
 	return ReadPathsFromDisk(paths)
+}
+
+func (a *App) StatPaths(paths []string) ([]PathFileStat, error) {
+	stats := make([]PathFileStat, 0, len(paths))
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			return nil, err
+		}
+
+		stats = append(stats, PathFileStat{
+			Path: path,
+			Size: info.Size(),
+		})
+	}
+
+	return stats, nil
 }
 
 // OpenLinkFile resolves the target of a Windows shortcut (.lnk) supplied as raw

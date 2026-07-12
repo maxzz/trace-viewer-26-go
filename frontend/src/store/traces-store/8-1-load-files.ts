@@ -1,7 +1,9 @@
 import { type FileWithHandle } from "browser-fs-access";
 import { atom, getDefaultStore } from "jotai";
 import { ref } from "valtio";
-import { extractTracesFromZipInWorker, isTrc3File, isZipFile } from "@/workers-client";
+import { extractTracesFromZipInWorker, getFileDiskPath, isTrc3File, isZipFile } from "@/workers-client";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { readFileFromBackendPath, statPathsFromBackend } from "@/wails/read-paths";
 import { setAppTitle } from "@/store/3-ui-app-title";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 import { filesStore, type FileData, type FileSourceInfo, type FileState, type FileUpdateInfo, type NewLinesMarker } from "./9-types-files-store";
@@ -46,7 +48,7 @@ type ReloadSingleOptions = {
 };
 
 type ReloadableFileState = FileState & {
-    source: Extract<FileSourceInfo, { kind: "handle"; }>;
+    source: Extract<FileSourceInfo, { kind: "handle"; } | { kind: "path"; }>;
 };
 
 const activeFileReloadControllers = new Map<string, AbortController>();
@@ -92,6 +94,10 @@ export async function asyncLoadAnyFiles(files: File[], droppedFolderName?: strin
             if (blockedTrc3FilesCount > 0 && appSettings.showAllBlockedFilesNotice) {
                 notice.info(`All .trc3 files were blocked by load filters from "${sourceName}".`);
             }
+        }
+
+        if (droppedFolderName && filesStore.states.some((fileState) => canReloadFile(fileState))) {
+            appSettings.fileUpdates.sizeMonitorEnabled = true;
         }
 
         appSettings.allTimes.needToRebuild = true;
@@ -257,8 +263,16 @@ async function newTraceItemLoad(fileState: FileState, file: File): Promise<void>
     }
 }
 
+export function isReloadableSource(source: FileSourceInfo): boolean {
+    if (source.kind === "handle") {
+        return true;
+    }
+
+    return source.kind === "path" && isBackendAvailable();
+}
+
 export function canReloadFile(fileState: FileState | null | undefined): fileState is ReloadableFileState {
-    return !!fileState && fileState.source.kind === "handle";
+    return !!fileState && isReloadableSource(fileState.source);
 }
 
 export async function asyncReloadFile(fileState: ReloadableFileState): Promise<void> {
@@ -301,7 +315,8 @@ export async function asyncReloadFiles(fileStates: readonly FileState[], options
 
 type MonitorProbe = {
     fileState: ReloadableFileState;
-    currentFile: File;
+    observedSize: number;
+    prefetchedFile?: File;
     grew: boolean;
 };
 
@@ -312,6 +327,7 @@ type MonitorProbe = {
 export async function asyncMonitorTick(): Promise<void> {
     const selectedId = getCurrentFileState()?.id ?? null;
     const followTail = isTraceViewAtEnd();
+    const pathSizes = await readReloadablePathFileSizes();
 
     const probeResults = await Promise.all(
         filesStore.states.map(
@@ -320,10 +336,21 @@ export async function asyncMonitorTick(): Promise<void> {
                 if (activeFileReloadControllers.has(fileState.id)) return null;
 
                 try {
-                    const currentFile = await fileState.source.handle.getFile();
-                    const grew = currentFile.size > fileState.updateInfo.lastObservedSize;
-                    updateObservedFileSize(fileState, currentFile.size, true);
-                    return { fileState, currentFile, grew };
+                    if (fileState.source.kind === "handle") {
+                        const currentFile = await fileState.source.handle.getFile();
+                        const grew = currentFile.size > fileState.updateInfo.lastObservedSize;
+                        updateObservedFileSize(fileState, currentFile.size, true);
+                        return { fileState, observedSize: currentFile.size, prefetchedFile: currentFile, grew };
+                    }
+
+                    const observedSize = pathSizes.get(fileState.source.path);
+                    if (observedSize === undefined) {
+                        return null;
+                    }
+
+                    const grew = observedSize > fileState.updateInfo.lastObservedSize;
+                    updateObservedFileSize(fileState, observedSize, true);
+                    return { fileState, observedSize, grew };
                 } catch {
                     return null;
                 }
@@ -340,7 +367,7 @@ export async function asyncMonitorTick(): Promise<void> {
         return;
     }
 
-    const { fileState, currentFile, grew } = selectedProbe;
+    const { fileState, prefetchedFile, grew } = selectedProbe;
     const needsInitialLoad = fileState.data.rawLines.length === 0;
     const needsContentReload = followTail && (grew || fileState.updateInfo.hasUnreloadedSizeChange);
 
@@ -348,7 +375,9 @@ export async function asyncMonitorTick(): Promise<void> {
         return;
     }
 
-    const prefetchedFiles = new Map<string, File>([[fileState.id, currentFile]]);
+    const prefetchedFiles = prefetchedFile
+        ? new Map<string, File>([[fileState.id, prefetchedFile]])
+        : undefined;
     const updatedCount = await asyncReloadFiles([fileState], { reason: "auto", prefetchedFiles });
 
     if (updatedCount > 0 && needsContentReload) {
@@ -445,6 +474,11 @@ function clearNewLinesMarker(fileState: FileState) {
 }
 
 function createFileSourceInfo(file: File): FileSourceInfo {
+    const diskPath = getFileDiskPath(file);
+    if (diskPath && isBackendAvailable()) {
+        return { kind: "path", path: diskPath };
+    }
+
     const handle = (file as FileWithHandle).handle;
     if (handle) {
         return { kind: "handle", handle };
@@ -636,7 +670,7 @@ async function parseLatestFileWithRetry(
         throwIfReloadCancelled(fileState.id, controller);
 
         try {
-            const fileToParse = nextFile ?? await fileState.source.handle.getFile();
+            const fileToParse = nextFile ?? await readReloadableFile(fileState);
             updateObservedFileSize(fileState, fileToParse.size, appSettings.fileUpdates.sizeMonitorEnabled);
             const parsed = await asyncParseTraceFile(fileToParse);
             throwIfReloadCancelled(fileState.id, controller);
@@ -727,6 +761,31 @@ function refreshCurrentFileStateIfSelected(fileState: FileState) {
     if (getCurrentFileState()?.id === fileState.id) {
         setCurrentFileState(fileState, true);
     }
+}
+
+async function readReloadablePathFileSizes(): Promise<Map<string, number>> {
+    const pathStates = filesStore.states.filter(
+        (fileState): fileState is ReloadableFileState & { source: { kind: "path"; path: string; }; } =>
+            canReloadFile(fileState) && fileState.source.kind === "path"
+    );
+    if (pathStates.length === 0) {
+        return new Map();
+    }
+
+    try {
+        const stats = await statPathsFromBackend(pathStates.map((fileState) => fileState.source.path));
+        return new Map(stats.map((stat) => [stat.path, stat.size]));
+    } catch {
+        return new Map();
+    }
+}
+
+async function readReloadableFile(fileState: ReloadableFileState): Promise<File> {
+    if (fileState.source.kind === "handle") {
+        return fileState.source.handle.getFile();
+    }
+
+    return readFileFromBackendPath(fileState.source.path);
 }
 
 function buildUpdateFailureMessage(fileName: string) {

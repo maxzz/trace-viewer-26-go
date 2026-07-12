@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/shadcn/button";
 import { IconPlayStart, IconPlayStop } from "@/components/ui/icons";
 import { appSettings } from "@/store/1-ui-settings";
 import { filesStore } from "@/store/traces-store/9-types-files-store";
-import { asyncMonitorTick } from "@/store/traces-store/8-1-load-files";
+import { asyncMonitorTick, isReloadableSource } from "@/store/traces-store/8-1-load-files";
 
 export function MonitorControls() {
     const { states } = useSnapshot(filesStore);
     const { fileUpdates } = useSnapshot(appSettings);
     const tickRunningRef = useRef(false);
 
-    const hasReloadableFiles = states.some((fileState) => fileState.source.kind === "handle");
+    const hasReloadableFiles = states.some((fileState) => isReloadableSource(fileState.source));
     const trackingEnabled = fileUpdates.sizeMonitorEnabled;
 
     useEffect(

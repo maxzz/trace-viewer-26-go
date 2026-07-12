@@ -1,9 +1,15 @@
 import { getBackendApp, isBackendAvailable } from "@/wails/is-wails";
+import { pathFileDataToUint8Array } from "@/wails/path-file-data";
 
 export type ReadPathsResult = {
     files: { name: string; path: string; data: number[]; }[];
     droppedFolderName?: string;
     unsupportedFile?: string;
+};
+
+export type PathFileStat = {
+    path: string;
+    size: number;
 };
 
 export async function readPathsFromBackend(paths: string[]): Promise<ReadPathsResult> {
@@ -12,6 +18,31 @@ export async function readPathsFromBackend(paths: string[]): Promise<ReadPathsRe
     }
 
     return getBackendApp()!.ReadPaths(paths) as Promise<ReadPathsResult>;
+}
+
+export async function statPathsFromBackend(paths: string[]): Promise<PathFileStat[]> {
+    if (!isBackendAvailable()) {
+        throw new Error("Backend is not available.");
+    }
+
+    if (paths.length === 0) {
+        return [];
+    }
+
+    return getBackendApp()!.StatPaths(paths) as Promise<PathFileStat[]>;
+}
+
+export async function readFileFromBackendPath(path: string): Promise<File> {
+    const result = await readPathsFromBackend([path]);
+    const pathFile = result.files[0];
+    if (!pathFile) {
+        throw new Error(`Failed to read file from path "${path}".`);
+    }
+
+    const bytes = pathFileDataToUint8Array(pathFile.data);
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    return new File([copy.buffer], pathFile.name);
 }
 
 // Resolves a Windows shortcut (.lnk) on the Go side and returns the referenced
