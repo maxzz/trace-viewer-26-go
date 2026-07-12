@@ -73,45 +73,48 @@ export type DragHandlersProps = {
     activeAtom: PrimitiveAtom<boolean>;
 };
 
-// function useWailsNativeDropHandlers(activeAtom: PrimitiveAtom<boolean>) {
-//     const setDropActive = useSetAtom(activeAtom);
+/*
+// Important: Don't use this approach and don't uncomment this code, it's not what we need.
+function useWailsNativeDropHandlers(activeAtom: PrimitiveAtom<boolean>) {
+    const setDropActive = useSetAtom(activeAtom);
 
-//     useEffect(
-//         () => {
-//             // if (!isWailsRuntime()) {
-//             //     return;
-//             // }
+    useEffect(
+        () => {
+            // if (!isWailsRuntime()) {
+            //     return;
+            // }
 
-//             function onDragEnter() {
-//                 setDropActive(true);
-//             }
+            function onDragEnter() {
+                setDropActive(true);
+            }
 
-//             function onDragOver(event: DragEvent) {
-//                 event.preventDefault();
-//             }
+            function onDragOver(event: DragEvent) {
+                event.preventDefault();
+            }
 
-//             function onDragLeave() {
-//                 setDropActive(false);
-//             }
+            function onDragLeave() {
+                setDropActive(false);
+            }
 
-//             OnFileDrop((_x, _y, paths) => {
-//                 setDropActive(false);
-//                 void asyncLoadFilesFromPaths(paths);
-//             }, false);
+            OnFileDrop((_x, _y, paths) => {
+                setDropActive(false);
+                void asyncLoadFilesFromPaths(paths);
+            }, false);
 
-//             const controller = new AbortController();
-//             const signal = { signal: controller.signal };
+            const controller = new AbortController();
+            const signal = { signal: controller.signal };
 
-//             const a = document.addEventListener;
-//             a("dragenter", onDragEnter, signal);
-//             a("dragover", onDragOver, signal);
-//             a("dragleave", onDragLeave, signal);
+            const a = document.addEventListener;
+            a("dragenter", onDragEnter, signal);
+            a("dragover", onDragOver, signal);
+            a("dragleave", onDragLeave, signal);
 
-//             return () => {
-//                 controller.abort();
-//                 OnFileDropOff();
-//             };
-//         },
-//         [setDropActive]
-//     );
-// }
+            return () => {
+                controller.abort();
+                OnFileDropOff();
+            };
+        },
+        [setDropActive]
+    );
+}
+*/
