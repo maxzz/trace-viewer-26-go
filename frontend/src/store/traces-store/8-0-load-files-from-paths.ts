@@ -1,4 +1,4 @@
-import { readPathsFromBackend } from "@/wails/read-paths";
+import { type ReadPathsResult, openLinkFileFromBackend, readPathsFromBackend } from "@/wails/read-paths";
 import { pathFileDataToUint8Array } from "@/wails/path-file-data";
 import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
@@ -16,7 +16,23 @@ export async function asyncLoadFilesFromPaths(paths: string[]) {
     }
 
     const result = await readPathsFromBackend(paths);
+    await handleReadPathsResult(result);
+}
 
+// Opens a Windows shortcut (.lnk) by resolving its target on the Go side and
+// loading the referenced file or folder. Must only be called when the backend
+// is available; the web-only case is handled by the caller.
+export async function asyncOpenLinkFile(file: File) {
+    if (!isBackendAvailable()) {
+        return;
+    }
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const result = await openLinkFileFromBackend(uint8ArrayToBase64(bytes));
+    await handleReadPathsResult(result);
+}
+
+async function handleReadPathsResult(result: ReadPathsResult) {
     if (result.unsupportedFile) {
         notice.info(`Unsupported file "${result.unsupportedFile}". Please drop a .trc3 file or a ZIP archive with .trc3 files.`);
         return;
@@ -41,4 +57,12 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
     const copy = new Uint8Array(bytes.byteLength);
     copy.set(bytes);
     return copy.buffer;
+}
+
+function uint8ArrayToBase64(bytes: Uint8Array): string {
+    let binary = "";
+    for (let index = 0; index < bytes.length; index++) {
+        binary += String.fromCharCode(bytes[index]);
+    }
+    return btoa(binary);
 }

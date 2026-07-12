@@ -1,9 +1,11 @@
 import { type FileWithHandle } from "browser-fs-access";
 import { atom } from "jotai";
-import { isOurFile, isTrc3File, isZipFile } from "@/workers-client";
+import { isLinkFile, isOurFile, isTrc3File, isZipFile } from "@/workers-client";
 import { closeAllFiles } from "@/store/traces-store/0-2-files-actions";
 import { asyncLoadAnyFiles } from "@/store/traces-store/8-1-load-files";
+import { asyncOpenLinkFile } from "@/store/traces-store/8-0-load-files-from-paths";
 import { setFileLoadSummary } from "@/store/traces-store/8-4-file-load-summary";
+import { isBackendAvailable } from "@/wails/is-wails";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 
 export type DoSetFilesFrom_Dnd_Atom = typeof doSetFilesFrom_Dnd_Atom;
@@ -30,6 +32,19 @@ type FileSystemDirectoryHandleWithValues = FileSystemDirectoryHandle & {
 export const doSetFilesFrom_Dnd_Atom = atom(                    // used by DropItDoc only
     null,
     async (get, set, dataTransfer: DataTransfer) => {
+        // The "Link File" check is performed here, on the web side. A single
+        // dropped .lnk shortcut is resolved by the Go backend; without a backend
+        // (web-only build) we can only inform the user.
+        const singleLinkFile = getSingleDroppedLinkFile(dataTransfer);
+        if (singleLinkFile) {
+            if (!isBackendAvailable()) {
+                notice.info(`Shortcut files (.lnk) like "${singleLinkFile.name}" can only be opened in the desktop application.`);
+                return;
+            }
+            await asyncOpenLinkFile(singleLinkFile);
+            return;
+        }
+
         const filesWithPaths: FileWithPath[] = [];
         let droppedFolderName: string | undefined;
         let unsupportedSingleFileName: string | undefined;
@@ -157,6 +172,29 @@ export const doSetFilesFrom_Dnd_Atom = atom(                    // used by DropI
         asyncLoadAnyFiles(files, droppedFolderName, filePaths);
     }
 );
+
+// Returns the dropped file when the drop consists of exactly one .lnk shortcut,
+// otherwise null. getAsFile() must run synchronously during the drop event, so
+// this is called before any await in the drop handler.
+function getSingleDroppedLinkFile(dataTransfer: DataTransfer): File | null {
+    if (dataTransfer.items) {
+        if (dataTransfer.items.length !== 1) {
+            return null;
+        }
+        const item = dataTransfer.items[0];
+        if (item.kind !== 'file') {
+            return null;
+        }
+        const file = item.getAsFile();
+        return file && isLinkFile(file) ? file : null;
+    }
+
+    if (dataTransfer.files.length === 1 && isLinkFile(dataTransfer.files[0])) {
+        return dataTransfer.files[0];
+    }
+
+    return null;
+}
 
 async function processHandle(handle: FileSystemHandle, rv: FileWithPath[]): Promise<void> {
     if (handle.kind === 'file') {

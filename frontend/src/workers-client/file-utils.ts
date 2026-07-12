@@ -8,6 +8,12 @@ export function isZipFile(file: File): boolean {
         file.type === 'application/x-zip-compressed';
 }
 
+// Windows shortcut ("Link File"). Detected on the web side so the drop can be
+// redirected to the Go backend, which resolves the shortcut target.
+export function isLinkFile(file: File): boolean {
+    return file.name.toLowerCase().endsWith('.lnk');
+}
+
 function isTrc3Name(name: string): boolean {
     return name.endsWith('.trc3');
 }

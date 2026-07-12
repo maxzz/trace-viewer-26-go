@@ -87,6 +87,18 @@ func (a *App) ReadPaths(paths []string) (ReadPathsResult, error) {
 	return ReadPathsFromDisk(paths)
 }
 
+// OpenLinkFile resolves the target of a Windows shortcut (.lnk) supplied as raw
+// bytes and opens the referenced file or folder through the regular read
+// pipeline. The web side detects the shortcut and redirects the call here.
+func (a *App) OpenLinkFile(lnkData []byte) (ReadPathsResult, error) {
+	target, err := resolveShortcutTarget(lnkData)
+	if err != nil {
+		return ReadPathsResult{}, err
+	}
+
+	return ReadPathsFromDisk([]string{target})
+}
+
 func collectPathsFromEntry(path string) (filePaths []string, droppedFolderName string, unsupported string, err error) {
 	info, err := os.Stat(path)
 	if err != nil {
