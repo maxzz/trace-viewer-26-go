@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useSnapshot } from "valtio";
 import { Button } from "@/components/ui/shadcn/button";
 import { IconPlayStart, IconPlayStop } from "@/components/ui/icons";
 import { appSettings } from "@/store/1-ui-settings";
 import { filesStore } from "@/store/traces-store/9-types-files-store";
 import { asyncMonitorTick, isReloadableSource } from "@/store/traces-store/8-1-load-files";
+import { isBackendAvailable } from "@/wails/is-wails";
+import { startBackendMonitor, stopBackendMonitor } from "@/wails/monitor";
 
 export function MonitorControls() {
     const { states } = useSnapshot(filesStore);
@@ -12,7 +14,18 @@ export function MonitorControls() {
     const tickRunningRef = useRef(false);
 
     const hasReloadableFiles = states.some((fileState) => isReloadableSource(fileState.source));
+    const hasHandleFiles = states.some((fileState) => fileState.source.kind === "handle");
     const trackingEnabled = fileUpdates.sizeMonitorEnabled;
+
+    // Stable key of the path-based files: lets the Go monitor restart only when the
+    // set of watched files changes, not on every observed size update.
+    const pathFilesKey = useMemo(
+        () => states
+            .filter((fileState) => fileState.source.kind === "path")
+            .map((fileState) => (fileState.source as { path: string; }).path)
+            .sort()
+            .join("|"),
+        [states]);
 
     useEffect(
         () => {
@@ -22,9 +35,37 @@ export function MonitorControls() {
         },
         [trackingEnabled, hasReloadableFiles]);
 
+    // Desktop path-based files are watched by the Go backend (real Windows FS events).
     useEffect(
         () => {
-            if (!trackingEnabled || !hasReloadableFiles) {
+            if (!isBackendAvailable()) {
+                return;
+            }
+
+            if (!trackingEnabled || pathFilesKey === "") {
+                void stopBackendMonitor();
+                return;
+            }
+
+            const files = filesStore.states
+                .filter((fileState) => fileState.source.kind === "path")
+                .map((fileState) => ({
+                    path: (fileState.source as { path: string; }).path,
+                    size: fileState.updateInfo.lastObservedSize,
+                }));
+
+            void startBackendMonitor(distinctParentFolders(files.map((file) => file.path)), files);
+
+            return () => {
+                void stopBackendMonitor();
+            };
+        },
+        [trackingEnabled, pathFilesKey]);
+
+    // Browser folder handles have no disk path, so they still rely on polling.
+    useEffect(
+        () => {
+            if (!trackingEnabled || !hasHandleFiles) {
                 return;
             }
 
@@ -53,7 +94,7 @@ export function MonitorControls() {
                 tickRunningRef.current = false;
             };
         },
-        [trackingEnabled, hasReloadableFiles, fileUpdates.autoUpdateIntervalMs]);
+        [trackingEnabled, hasHandleFiles, fileUpdates.autoUpdateIntervalMs]);
 
     if (!hasReloadableFiles) {
         return null;
@@ -77,4 +118,18 @@ export function MonitorControls() {
             </Button>
         </div>
     );
+}
+
+function distinctParentFolders(paths: string[]): string[] {
+    const folders = new Set<string>();
+
+    for (const path of paths) {
+        const normalized = path.replace(/\//g, "\\");
+        const index = normalized.lastIndexOf("\\");
+        if (index > 0) {
+            folders.add(normalized.slice(0, index));
+        }
+    }
+
+    return Array.from(folders);
 }

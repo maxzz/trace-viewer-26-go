@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/shadcn/button";
 import { IconStopCircle, SymbolInfo } from "@/components/ui/icons";
 import { timelineBuildNoticeStore } from "./3-1-notice-timeline-state";
+import { fileChangeNoticeStore } from "./3-2-notice-file-changes-state";
 import { allTimesStore } from "@/store/traces-store/3-1-all-times-store";
 import { isLoadingFilesAtom } from "@/store/traces-store/8-1-load-files";
 import { dialogTimelineCancelOpenAtom } from "@/store/2-ui-dialog-atoms";
@@ -17,6 +18,7 @@ export function LoadingProgress() {
             <ParsingFilesProgress />
             <TimelineBuildProgress />
             <TimelineBuildNotice />
+            <FileChangesNotice />
         </motion.div>
     );
 }
@@ -75,14 +77,36 @@ function TimelineBuildNotice() {
     );
 }
 
-function AnimatedNotice({ show, children }: { show: boolean; children: ReactNode }) {
+function FileChangesNotice() {
+    const { added, removed } = useSnapshot(fileChangeNoticeStore);
+    const show = added > 0 || removed > 0;
+
+    return (
+        <AnimatedNotice show={show} appearDelay={0}>
+            <div className="px-2 h-6 text-xs font-mono rounded border border-muted-foreground/30 bg-muted-foreground/5 flex items-center gap-1.5" title="Files added / removed">
+                {added > 0 && (
+                    <span className="text-green-600">
+                        +{added}
+                    </span>
+                )}
+                {removed > 0 && (
+                    <span className="text-red-500">
+                        -{removed}
+                    </span>
+                )}
+            </div>
+        </AnimatedNotice>
+    );
+}
+
+function AnimatedNotice({ show, children, appearDelay = 1 }: { show: boolean; children: ReactNode; appearDelay?: number; }) {
     return (
         <AnimatePresence initial={false}>
             {show && (
                 <motion.div
                     layout
                     initial={{ opacity: 0, width: 0 }}
-                    animate={{ opacity: 1, width: "auto", transition: { duration: 0.2, delay: 1, ease: "easeIn" } }}
+                    animate={{ opacity: 1, width: "auto", transition: { duration: 0.2, delay: appearDelay, ease: "easeIn" } }}
                     exit={{ opacity: 0, width: 0 }}
                     transition={{ duration: 0.2, ease: "easeInOut" }}
                     className="overflow-hidden flex"

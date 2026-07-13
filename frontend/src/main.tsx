@@ -5,11 +5,13 @@ import './index.css';
 import { recomputeFilterMatches } from "@/store/4-file-filters";
 import { recomputeHighlightMatches } from "@/store/5-highlight-rules";
 import { initWailsFileOpening } from "@/wails/init-wails-file-opening";
+import { initWailsMonitor } from "@/wails/init-wails-monitor";
 
 // Initial computation in case of hot reload or persisted state
 recomputeFilterMatches();
 recomputeHighlightMatches();
 initWailsFileOpening();
+initWailsMonitor();
 
 createRoot(document.getElementById('root')!).render(
     <StrictMode>

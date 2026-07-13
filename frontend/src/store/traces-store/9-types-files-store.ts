@@ -27,6 +27,10 @@ export interface FileUpdateInfo {
     totalAddedBytes: number;        // committed total, shown in gray.
     recentAddedBytes: number;       // most recent check delta, shown in orange for ~1s.
     recentAddedExpiresAt: number | null; // when the orange delta folds into totalAddedBytes.
+
+    // Transient row flash after the Go monitor detects the file was added/removed.
+    flashKind: "added" | "removed" | null; // green when "added", red when "removed".
+    flashExpiresAt: number | null;         // when the flash highlight clears.
 }
 
 export interface FileData  {

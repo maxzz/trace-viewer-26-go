@@ -12,6 +12,10 @@ export function ReadPaths(arg1:Array<string>):Promise<backend.ReadPathsResult>;
 
 export function SetDevToolsState(arg1:boolean):Promise<void>;
 
+export function StartMonitor(arg1:backend.StartMonitorRequest):Promise<void>;
+
 export function StatPaths(arg1:Array<string>):Promise<Array<backend.PathFileStat>>;
+
+export function StopMonitor():Promise<void>;
 
 export function ToggleDevTools():Promise<void>;

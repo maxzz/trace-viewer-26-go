@@ -14,6 +14,9 @@ type App struct {
 	windowBoundsCancel context.CancelFunc
 	pendingLaunchPaths []string
 	mu                 sync.Mutex
+
+	monitorMu     sync.Mutex
+	monitorCancel context.CancelFunc
 }
 
 // NewApp creates a new App application struct
@@ -57,6 +60,7 @@ func (a *App) emitPendingLaunchPaths() {
 // Returning true will cause the application to continue, false will continue shutdown as normal.
 func (a *App) BeforeClose(ctx context.Context) (prevent bool) {
 	a.stopWindowBoundsWatcher()
+	a.platformStopMonitor()
 	a.saveWindowOptions(ctx)
 	return false
 }

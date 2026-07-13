@@ -58,6 +58,14 @@ export const FileListRow = memo(
                             <div className={cn("absolute inset-0 opacity-20 pointer-events-none", overlayClasses)} />
                         )}
 
+                        {/* Added/removed flash from the file monitor */}
+                        {fileState.updateInfo.flashKind === "added" && (
+                            <div className="absolute inset-0 bg-green-500/30 pointer-events-none" />
+                        )}
+                        {fileState.updateInfo.flashKind === "removed" && (
+                            <div className="absolute inset-0 bg-red-500/30 pointer-events-none" />
+                        )}
+
                         {/* File icon */}
                         <div className="relative shrink-0 z-10">
                             <FileText className={cn("size-4", isSelected ? "text-primary" : "opacity-70", hasError && "text-red-600 dark:text-red-400")} />

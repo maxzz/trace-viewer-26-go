@@ -22,8 +22,16 @@ export function SetDevToolsState(arg1) {
   return window['go']['backend']['App']['SetDevToolsState'](arg1);
 }
 
+export function StartMonitor(arg1) {
+  return window['go']['backend']['App']['StartMonitor'](arg1);
+}
+
 export function StatPaths(arg1) {
   return window['go']['backend']['App']['StatPaths'](arg1);
+}
+
+export function StopMonitor() {
+  return window['go']['backend']['App']['StopMonitor']();
 }
 
 export function ToggleDevTools() {

@@ -6,6 +6,8 @@ type BackendApp = {
     LookupErrorMessage: (code: string) => Promise<string>;
     SetDevToolsState: (open: boolean) => Promise<void>;
     ToggleDevTools: () => Promise<void>;
+    StartMonitor: (req: { folders: string[]; files: { path: string; size: number; }[]; }) => Promise<void>;
+    StopMonitor: () => Promise<void>;
 };
 
 type WailsWindow = Window & {

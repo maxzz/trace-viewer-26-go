@@ -1,9 +1,11 @@
 import { type FileWithHandle } from "browser-fs-access";
 import { atom, getDefaultStore } from "jotai";
 import { ref } from "valtio";
-import { extractTracesFromZipInWorker, getFileDiskPath, isTrc3File, isZipFile } from "@/workers-client";
+import { extractTracesFromZipInWorker, getFileDiskPath, isTrc3File, isZipFile, setFileDiskPath } from "@/workers-client";
 import { isBackendAvailable } from "@/wails/is-wails";
-import { readFileFromBackendPath, statPathsFromBackend } from "@/wails/read-paths";
+import { type ReadPathsResult, readFileFromBackendPath, readPathsFromBackend } from "@/wails/read-paths";
+import { pathFileDataToUint8Array } from "@/wails/path-file-data";
+import { type MonitorChangedFile, type MonitorChanges } from "@/wails/monitor";
 import { setAppTitle } from "@/store/3-ui-app-title";
 import { notice } from "@/components/ui/local-ui/7-toaster";
 import { filesStore, type FileData, type FileSourceInfo, type FileState, type FileUpdateInfo, type NewLinesMarker } from "./9-types-files-store";
@@ -18,7 +20,8 @@ import { buildAlltimes } from "./3-2-all-times-listener";
 import { setFileLoading } from "./8-3-file-loading-atoms";
 import { recomputeHighlightMatches } from "../5-highlight-rules";
 import { allTimesStore } from "./3-1-all-times-store";
-import { selectFile } from "./0-2-files-actions";
+import { closeFile, selectFile } from "./0-2-files-actions";
+import { getChangeHighlightDurationMs, showFileChangeNotice } from "@/components/0-all/1-header/0-all-menu-monitor/3-2-notice-file-changes-state";
 import { getCurrentFileState, setCurrentFileState, setCurrentLineIndex } from "./0-1-files-current-state";
 import { getActiveBlockLoadPatterns, shouldBlockFileLoad } from "../9-block-load-filters";
 import { setFileLoadSummary } from "./8-4-file-load-summary";
@@ -120,7 +123,7 @@ function buildDroppedSourceName(files: File[], droppedFolderName?: string): stri
     return "drop";
 }
 
-async function loadFilesToStore(items: FileLoadItem[]) {
+async function loadFilesToStore(items: FileLoadItem[]): Promise<FileState[]> {
     // Check if this is the first load (no files existed before)
     const isFirstLoad = filesStore.states.length === 0;
 
@@ -175,6 +178,8 @@ async function loadFilesToStore(items: FileLoadItem[]) {
             setCurrentFileState(currentState, true);
         }
     }
+
+    return itemsToLoad.map((item) => item.fileState);
 }
 
 function newTraceItemCreate(file: File, source: FileSourceInfo): FileState {
@@ -220,6 +225,8 @@ function newTraceItemCreate(file: File, source: FileSourceInfo): FileState {
                 totalAddedBytes: 0,
                 recentAddedBytes: 0,
                 recentAddedExpiresAt: null,
+                flashKind: null,
+                flashExpiresAt: null,
             },
             currentLineIdxAtom: atom(-1),
             scrollTopAtom: atom(0),
@@ -320,37 +327,27 @@ type MonitorProbe = {
     grew: boolean;
 };
 
-// Single monitor pass driven by the "Track file changes" toggle:
-//  - for every reloadable file: read its size, update the byte counters and the unreloaded-change flag;
-//  - for the currently selected file only: if it grew AND the right pane was scrolled to the very
-//    bottom, reload its content, then scroll to (and select) the freshly appended lines.
+// Single monitor pass for browser folder handles (the Go backend watches
+// desktop path-based files instead). For every handle-backed file it reads the
+// size and updates counters; for the currently selected file only, if it grew
+// AND the pane was scrolled to the very bottom, it reloads and follows the tail.
 export async function asyncMonitorTick(): Promise<void> {
     const selectedId = getCurrentFileState()?.id ?? null;
     const followTail = isTraceViewAtEnd();
-    const pathSizes = await readReloadablePathFileSizes();
 
     const probeResults = await Promise.all(
         filesStore.states.map(
             async (fileState): Promise<MonitorProbe | null> => {
                 if (!canReloadFile(fileState)) return null;
+                // Path-based files are monitored by the Go backend via filesystem events.
+                if (fileState.source.kind !== "handle") return null;
                 if (activeFileReloadControllers.has(fileState.id)) return null;
 
                 try {
-                    if (fileState.source.kind === "handle") {
-                        const currentFile = await fileState.source.handle.getFile();
-                        const grew = currentFile.size > fileState.updateInfo.lastObservedSize;
-                        updateObservedFileSize(fileState, currentFile.size, true);
-                        return { fileState, observedSize: currentFile.size, prefetchedFile: currentFile, grew };
-                    }
-
-                    const observedSize = pathSizes.get(fileState.source.path);
-                    if (observedSize === undefined) {
-                        return null;
-                    }
-
-                    const grew = observedSize > fileState.updateInfo.lastObservedSize;
-                    updateObservedFileSize(fileState, observedSize, true);
-                    return { fileState, observedSize, grew };
+                    const currentFile = await fileState.source.handle.getFile();
+                    const grew = currentFile.size > fileState.updateInfo.lastObservedSize;
+                    updateObservedFileSize(fileState, currentFile.size, true);
+                    return { fileState, observedSize: currentFile.size, prefetchedFile: currentFile, grew };
                 } catch {
                     return null;
                 }
@@ -391,6 +388,188 @@ export async function asyncReloadFileById(fileId: string): Promise<void> {
         await asyncReloadFile(fileState);
     }
 }
+
+//#region backend filesystem monitor
+
+// Applies a batch of changes reported by the Go filesystem watcher: newly added
+// files are loaded and flashed green, deleted files are flashed red then removed,
+// and modified files reuse the existing size-tracking / tail-follow reload path.
+export async function asyncApplyMonitorChanges(changes: MonitorChanges): Promise<void> {
+    if (!appSettings.fileUpdates.sizeMonitorEnabled) {
+        return;
+    }
+
+    const removedCount = applyDeletedFiles(changes.deleted ?? []);
+    await applyModifiedFiles(changes.modified ?? []);
+    const addedCount = await applyAddedFiles(changes.added ?? []);
+
+    showFileChangeNotice(addedCount, removedCount);
+}
+
+function applyDeletedFiles(paths: readonly string[]): number {
+    let removed = 0;
+
+    for (const path of paths) {
+        const fileState = findPathFileState(path);
+        if (!fileState) {
+            continue;
+        }
+
+        removed++;
+        const fileId = fileState.id;
+        markFileFlash(fileState, "removed", () => closeFile(fileId));
+    }
+
+    return removed;
+}
+
+async function applyModifiedFiles(modified: readonly MonitorChangedFile[]): Promise<void> {
+    if (modified.length === 0) {
+        return;
+    }
+
+    const selectedId = getCurrentFileState()?.id ?? null;
+    const followTail = isTraceViewAtEnd();
+    let selectedState: ReloadableFileState | null = null;
+    let selectedGrew = false;
+
+    for (const change of modified) {
+        const fileState = findPathFileState(change.path);
+        if (!fileState || !canReloadFile(fileState)) {
+            continue;
+        }
+        if (activeFileReloadControllers.has(fileState.id)) {
+            continue;
+        }
+
+        const grew = change.size > fileState.updateInfo.lastObservedSize;
+        updateObservedFileSize(fileState, change.size, true);
+
+        if (fileState.id === selectedId) {
+            selectedState = fileState;
+            selectedGrew = grew;
+        }
+    }
+
+    if (!selectedState) {
+        return;
+    }
+
+    const needsInitialLoad = selectedState.data.rawLines.length === 0;
+    const needsContentReload = followTail && (selectedGrew || selectedState.updateInfo.hasUnreloadedSizeChange);
+    if (!needsInitialLoad && !needsContentReload) {
+        return;
+    }
+
+    const updatedCount = await asyncReloadFiles([selectedState], { reason: "auto" });
+    if (updatedCount > 0 && needsContentReload) {
+        followSelectedFileTail(selectedState);
+    }
+}
+
+async function applyAddedFiles(added: readonly MonitorChangedFile[]): Promise<number> {
+    const newPaths = added
+        .map((change) => change.path)
+        .filter((path) => isTrc3Path(path) && !findPathFileState(path) && !shouldBlockFileLoad(basePathName(path)));
+
+    if (newPaths.length === 0) {
+        return 0;
+    }
+
+    let result: ReadPathsResult;
+    try {
+        result = await readPathsFromBackend(newPaths);
+    } catch {
+        return 0;
+    }
+
+    if (!result.files || result.files.length === 0) {
+        return 0;
+    }
+
+    const items: FileLoadItem[] = result.files.map((pathFile) => {
+        const file = setFileDiskPath(
+            new File([monitorBytesToArrayBuffer(pathFileDataToUint8Array(pathFile.data))], pathFile.name),
+            pathFile.path
+        );
+        return { file, source: createFileSourceInfo(file) };
+    });
+
+    const createdStates = await loadFilesToStore(items);
+
+    for (const fileState of createdStates) {
+        markFileFlash(fileState, "added");
+    }
+
+    appSettings.allTimes.needToRebuild = true;
+    buildAlltimes();
+
+    return createdStates.length;
+}
+
+// Per-file green/red flash after the backend reports an add/remove. onExpire runs
+// when the flash clears (used to actually remove a deleted file after the flash).
+const fileFlashTimers = new Map<string, number>();
+
+function markFileFlash(fileState: FileState, kind: "added" | "removed", onExpire?: () => void) {
+    const durationMs = getChangeHighlightDurationMs();
+
+    fileState.updateInfo.flashKind = kind;
+    fileState.updateInfo.flashExpiresAt = Date.now() + durationMs;
+    refreshCurrentFileStateIfSelected(fileState);
+
+    const existing = fileFlashTimers.get(fileState.id);
+    if (existing !== undefined) {
+        window.clearTimeout(existing);
+    }
+
+    const timerId = window.setTimeout(
+        () => {
+            fileFlashTimers.delete(fileState.id);
+
+            const current = filesStore.states.find((item) => item.id === fileState.id);
+            if (current) {
+                current.updateInfo.flashKind = null;
+                current.updateInfo.flashExpiresAt = null;
+                refreshCurrentFileStateIfSelected(current);
+            }
+
+            onExpire?.();
+        },
+        durationMs
+    );
+
+    fileFlashTimers.set(fileState.id, timerId);
+}
+
+function findPathFileState(path: string): FileState | undefined {
+    const key = normalizePathKey(path);
+    return filesStore.states.find(
+        (fileState) => fileState.source.kind === "path" && normalizePathKey(fileState.source.path) === key
+    );
+}
+
+function normalizePathKey(path: string): string {
+    return path.replace(/\//g, "\\").toLowerCase();
+}
+
+function isTrc3Path(path: string): boolean {
+    return path.toLowerCase().endsWith(".trc3");
+}
+
+function basePathName(path: string): string {
+    const normalized = path.replace(/\//g, "\\");
+    const index = normalized.lastIndexOf("\\");
+    return index >= 0 ? normalized.slice(index + 1) : normalized;
+}
+
+function monitorBytesToArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+    const copy = new Uint8Array(bytes.byteLength);
+    copy.set(bytes);
+    return copy.buffer;
+}
+
+//#endregion backend filesystem monitor
 
 function followSelectedFileTail(fileState: FileState) {
     if (getCurrentFileState()?.id !== fileState.id) {
@@ -760,23 +939,6 @@ function isReloadCancelled(fileId: string, controller: AbortController, error: u
 function refreshCurrentFileStateIfSelected(fileState: FileState) {
     if (getCurrentFileState()?.id === fileState.id) {
         setCurrentFileState(fileState, true);
-    }
-}
-
-async function readReloadablePathFileSizes(): Promise<Map<string, number>> {
-    const pathStates = filesStore.states.filter(
-        (fileState): fileState is ReloadableFileState & { source: { kind: "path"; path: string; }; } =>
-            canReloadFile(fileState) && fileState.source.kind === "path"
-    );
-    if (pathStates.length === 0) {
-        return new Map();
-    }
-
-    try {
-        const stats = await statPathsFromBackend(pathStates.map((fileState) => fileState.source.path));
-        return new Map(stats.map((stat) => [stat.path, stat.size]));
-    } catch {
-        return new Map();
     }
 }
 
